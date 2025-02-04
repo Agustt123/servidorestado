@@ -7,10 +7,10 @@ const RABBITMQ_URL = 'amqp://lightdata:QQyfVBKRbw6fBb@158.69.131.226:5672';
 const QUEUE_NAME = 'srvshipmltosrvstates';
 
 const newDbConfig = {
-  host: 'localhost',
-  user: 'logisticaA',
-  password: 'logisticaa',
-  database: 'logisticaa',
+  host: 'mysqlhc.lightdata.com.ar',
+  user: 'serveres_udata',
+  password: '5j2[2A[]D@jQ',
+  database: 'serveres_data',
 };
 
 // Función para escuchar los mensajes de la cola
