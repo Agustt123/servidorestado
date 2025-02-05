@@ -31,9 +31,14 @@ const listenToQueue2 = async () => {
           const jsonData = JSON.parse(msg.content.toString());
           console.log('Datos recibidos:', jsonData);
 
-          await checkAndInsertData(jsonData);
-          channel.ack(msg);
-          console.log('Mensaje procesado.');
+          try {
+            await checkAndInsertData(jsonData);
+            channel.ack(msg);
+            console.log('Mensaje procesado.');
+          } catch (error) {
+            console.error('Error procesando el mensaje:', error);
+            channel.nack(msg); // No confirmar el mensaje si hubo un error
+          }
         }
       });
 
@@ -114,36 +119,21 @@ const checkAndInsertData = async (jsonData) => {
                   } else {
                     console.log(`Campo superado actualizado a 1 en la nueva base de datos: ${JSON.stringify(jsonData)}`);
                   }
-
-                  // Insertar nuevo registro con los nuevos datos
-                  const insertQuery = `
-                    INSERT INTO ${tableName} (didEnvio, operador, estado, estadoML, subestadoML, fecha, quien, superado, elim)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                  `;
-                  newDbConnection.query(insertQuery, [didenvio, choferAsignado, estado, estadoML, subestado, formattedFecha, quien, superado, elim], (err) => {
-                    if (err) {
-                      console.error('Error al insertar los nuevos datos en la nueva base de datos:', err);
-                    } else {
-                      console.log(`Nuevo registro insertado correctamente en la nueva base de datos: ${JSON.stringify(jsonData)}`);
-                    }
-                    newDbConnection.end(); // Cerrar conexión aquí
-                  });
                 });
-              } else {
-                // Insertar nuevo registro
-                const insertQuery = `
-                  INSERT INTO ${tableName} (didEnvio, operador, estado, estadoML, subestadoML, fecha, quien, superado, elim)
-                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                `;
-                newDbConnection.query(insertQuery, [didenvio, choferAsignado, estado, estadoML, subestado, formattedFecha, quien, superado, elim], (err) => {
-                  if (err) {
-                    console.error('Error al insertar los datos en la nueva base de datos:', err);
-                  } else {
-                    console.log(`Datos insertados correctamente en la nueva base de datos: ${JSON.stringify(jsonData)}`);
-                  }
-                  newDbConnection.end(); // Cerrar conexión aquí
-                });
-              }
+              } 
+              // Insertar nuevo registro con los nuevos datos
+              const insertQuery = `
+                INSERT INTO ${tableName} (didEnvio, operador, estado, estadoML, subestadoML, fecha, quien, superado, elim)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+              `;
+              newDbConnection.query(insertQuery, [didenvio, choferAsignado, estado, estadoML, subestado, formattedFecha, quien, superado, elim], (err) => {
+                if (err) {
+                  console.error('Error al insertar los nuevos datos en la nueva base de datos:', err);
+                } else {
+                  console.log(`Nuevo registro insertado correctamente en la nueva base de datos: ${JSON.stringify(jsonData)}`);
+                }
+                newDbConnection.end(); // Cerrar conexión aquí
+              });
             });
           } else {
             // Crear tabla e insertar
