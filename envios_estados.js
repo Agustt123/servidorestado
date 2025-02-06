@@ -76,15 +76,14 @@ const checkAndInsertData = async (jsonData) => {
     dbConnection = await getConnection(didempresa);
     const getChoferAsignadoQuery = `SELECT choferAsignado FROM envios WHERE elim = 0 AND superado = 0 AND did = ?`;
 
-    dbConnection.query(getChoferAsignadoQuery, [didenvio], (err, choferResults) => {
+    dbConnection.query(getChoferAsignadoQuery, [didenvio], async (err, choferResults) => {
       if (err) {
         console.error('Error al obtener el choferAsignado:', err);
         return;
       }
-
       const choferAsignado = choferResults.length > 0 ? choferResults[0].choferAsignado : 0;
 
-      // Conexión a la nueva base de datos
+      // Crear conexión a la nueva base de datos
       const newDbConnection = mysql.createConnection(newDbConfig);
       newDbConnection.connect((err) => {
         if (err) {
@@ -176,6 +175,10 @@ const checkAndInsertData = async (jsonData) => {
     });
   } catch (error) {
     console.error('Error en checkAndInsertData:', error);
+  } finally {
+    if (dbConnection) {
+      dbConnection.end(); // Asegúrate de cerrar la conexión a la base de datos actual
+    }
   }
 };
 
@@ -183,3 +186,4 @@ const checkAndInsertData = async (jsonData) => {
 listenToQueue2();
 
 module.exports = { listenToQueue2 };
+
