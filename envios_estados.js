@@ -1,4 +1,5 @@
 const amqp = require('amqplib');
+const express = require('express');
 const { redisClient, getConnection } = require('./dbconfig');
 const mysql = require('mysql'); // Usar mysql normal
 const moment = require('moment'); 
@@ -12,7 +13,7 @@ const newDbConfig = {
   password: '5j2[2A[]D@jQ',
   database: 'serveres_data',
 };
-
+const app = express();
 // Función para escuchar los mensajes de la cola
 const listenToQueue2 = async () => {
   let connection;
@@ -181,7 +182,12 @@ const checkAndInsertData = async (jsonData) => {
     }
   }
 };
-
+app.get('/', (req, res) => {
+  res.status(200).json({
+    estado: true,
+    mesanje: "Hola chris"
+});
+});
 // Iniciar la escucha de la cola
 listenToQueue2();
 
