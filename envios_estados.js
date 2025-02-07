@@ -151,7 +151,15 @@ const checkAndInsertData = async (jsonData) => {
               autofecha TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
               quien INT,
               superado INT,
-              elim INT
+              elim INT,
+              INDEX(didEnvio),
+              INDEX(operador),
+              INDEX(fecha),
+              INDEX(superado),
+              INDEX(elim),
+              INDEX(quien),
+              INDEX(estadoML),
+              INDEX(subestadoML)
             )`;
             newDbConnection.query(createTableQuery, (err) => {
               if (err) {
