@@ -7,11 +7,11 @@ const RABBITMQ_URL = 'amqp://lightdata:QQyfVBKRbw6fBb@158.69.131.226:5672';
 const QUEUE_NAME = 'srvshipmltosrvstates';
 
 const newDbConfig = {
-  host: '10.70.0.69',
+  host: '149.56.182.49',
   user: 'userdata2',
   password: 'pt78pt79',
   database: 'dataestaos',
-  //port: 44337
+  port: 44337
 
 };
 
@@ -132,7 +132,7 @@ const checkAndInsertData = async (jsonData) => {
                 if (err) {
                   console.error('Error al insertar los nuevos datos en la nueva base de datos:', err);
                 } else {
-    //              console.log(`Nuevo registro insertado correctamente en la nueva base de datos: ${JSON.stringify(jsonData)}`);
+                  console.log(`Nuevo registro insertado correctamente en la nueva base de datos: ${JSON.stringify(jsonData)}`);
                 }
                 newDbConnection.end(); // Cerrar conexión aquí
               });
@@ -201,5 +201,3 @@ listenToQueue2();
 
 
 module.exports = { listenToQueue2 };
-
-
