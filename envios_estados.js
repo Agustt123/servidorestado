@@ -188,7 +188,11 @@ app.get('/', (req, res) => {
     mesanje: "Hola chris"
 });
 });
-// Iniciar la escucha de la cola
+
+const PORT = 13000;
+app.listen(PORT, () => {
+  console.log(`Servidor escuchando en http://localhost:${PORT}`);
+});
 listenToQueue2();
 
 module.exports = { listenToQueue2 };
