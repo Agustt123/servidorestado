@@ -3,16 +3,18 @@ const express = require('express');
 const { redisClient, getConnection } = require('./dbconfig');
 const mysql = require('mysql'); // Usar mysql normal
 const moment = require('moment'); 
-
 const RABBITMQ_URL = 'amqp://lightdata:QQyfVBKRbw6fBb@158.69.131.226:5672';
 const QUEUE_NAME = 'srvshipmltosrvstates';
 
 const newDbConfig = {
-  host: 'mysqlhc.lightdata.com.ar',
-  user: 'serveres_udata',
-  password: '5j2[2A[]D@jQ',
-  database: 'serveres_data',
+  host: '10.70.0.69',
+  user: 'userdata2',
+  password: 'pt78pt79',
+  database: 'dataestaos',
+  //port: 44337
+
 };
+
 const app = express();
 // Función para escuchar los mensajes de la cola
 const listenToQueue2 = async () => {
@@ -25,12 +27,12 @@ const listenToQueue2 = async () => {
       channel = await connection.createChannel();
       await channel.assertQueue(QUEUE_NAME, { durable: true });
 
-    //  console.log(`Esperando mensajes en la cola ${QUEUE_NAME}...`);
+//      console.log(`Esperando mensajes en la cola ${QUEUE_NAME}...`);
 
       channel.consume(QUEUE_NAME, async (msg) => {
         if (msg !== null) {
           const jsonData = JSON.parse(msg.content.toString());
-         // console.log('Datos recibidos:', jsonData);
+//          console.log('Datos recibidos:', jsonData);
 
           try {
             await checkAndInsertData(jsonData);
@@ -117,7 +119,7 @@ const checkAndInsertData = async (jsonData) => {
                   if (err) {
                     console.error('Error al actualizar el campo superado en la nueva base de datos:', err);
                   } else {
-                  //  console.log(`Campo superado actualizado a 1 en la nueva base de datos: ${JSON.stringify(jsonData)}`);
+  //                  console.log(`Campo superado actualizado a 1 en la nueva base de datos: ${JSON.stringify(jsonData)}`);
                   }
                 });
               } 
@@ -130,7 +132,7 @@ const checkAndInsertData = async (jsonData) => {
                 if (err) {
                   console.error('Error al insertar los nuevos datos en la nueva base de datos:', err);
                 } else {
-               //   console.log(`Nuevo registro insertado correctamente en la nueva base de datos: ${JSON.stringify(jsonData)}`);
+    //              console.log(`Nuevo registro insertado correctamente en la nueva base de datos: ${JSON.stringify(jsonData)}`);
                 }
                 newDbConnection.end(); // Cerrar conexión aquí
               });
@@ -152,7 +154,7 @@ const checkAndInsertData = async (jsonData) => {
             )`;
             newDbConnection.query(createTableQuery, (err) => {
               if (err) {
-                console.error('Error al crear la tabla en la nueva base de datos:', err);
+               // console.error('Error al crear la tabla en la nueva base de datos:', err);
                 newDbConnection.end(); // Cerrar conexión aquí
                 return;
               }
@@ -165,7 +167,7 @@ const checkAndInsertData = async (jsonData) => {
                 if (err) {
                   console.error('Error al insertar los datos en la nueva base de datos:', err);
                 } else {
-           //       console.log(`Tabla creada y datos insertados correctamente en la nueva base de datos: ${JSON.stringify(jsonData)}`);
+               //   console.log(`Tabla creada y datos insertados correctamente en la nueva base de datos: ${JSON.stringify(jsonData)}`);
                 }
                 newDbConnection.end(); // Cerrar conexión aquí
               });
@@ -193,7 +195,11 @@ const PORT = 13000;
 app.listen(PORT, () => {
  // console.log(`Servidor escuchando en http://localhost:${PORT}`);
 });
+
+// Iniciar la escucha de la cola
 listenToQueue2();
 
+
 module.exports = { listenToQueue2 };
+
 
