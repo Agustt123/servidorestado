@@ -132,7 +132,7 @@ const checkAndInsertData = async (jsonData) => {
                 if (err) {
                   console.error('Error al insertar los nuevos datos en la nueva base de datos:', err);
                 } else {
-                  console.log(`Nuevo registro insertado correctamente en la nueva base de datos: ${JSON.stringify(jsonData)}`);
+                 // console.log(`Nuevo registro insertado correctamente en la nueva base de datos: ${JSON.stringify(jsonData)}`);
                 }
                 newDbConnection.end(); // Cerrar conexión aquí
               });
