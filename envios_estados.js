@@ -35,7 +35,7 @@ const listenToQueue2 = async () => {
           try {
             await checkAndInsertData(jsonData);
             channel.ack(msg);
-            console.log('Mensaje procesado.');
+          //  console.log('Mensaje procesado.');
           } catch (error) {
             console.error('Error procesando el mensaje:', error);
             channel.nack(msg); // No confirmar el mensaje si hubo un error
@@ -191,7 +191,7 @@ app.get('/', (req, res) => {
 
 const PORT = 13000;
 app.listen(PORT, () => {
-  console.log(`Servidor escuchando en http://localhost:${PORT}`);
+ // console.log(`Servidor escuchando en http://localhost:${PORT}`);
 });
 listenToQueue2();
 
