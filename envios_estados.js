@@ -24,12 +24,12 @@ const listenToQueue2 = async () => {
       channel = await connection.createChannel();
       await channel.assertQueue(QUEUE_NAME, { durable: true });
 
-      console.log(`Esperando mensajes en la cola ${QUEUE_NAME}...`);
+    //  console.log(`Esperando mensajes en la cola ${QUEUE_NAME}...`);
 
       channel.consume(QUEUE_NAME, async (msg) => {
         if (msg !== null) {
           const jsonData = JSON.parse(msg.content.toString());
-          console.log('Datos recibidos:', jsonData);
+         // console.log('Datos recibidos:', jsonData);
 
           try {
             await checkAndInsertData(jsonData);
@@ -116,7 +116,7 @@ const checkAndInsertData = async (jsonData) => {
                   if (err) {
                     console.error('Error al actualizar el campo superado en la nueva base de datos:', err);
                   } else {
-                    console.log(`Campo superado actualizado a 1 en la nueva base de datos: ${JSON.stringify(jsonData)}`);
+                  //  console.log(`Campo superado actualizado a 1 en la nueva base de datos: ${JSON.stringify(jsonData)}`);
                   }
                 });
               } 
@@ -129,7 +129,7 @@ const checkAndInsertData = async (jsonData) => {
                 if (err) {
                   console.error('Error al insertar los nuevos datos en la nueva base de datos:', err);
                 } else {
-                  console.log(`Nuevo registro insertado correctamente en la nueva base de datos: ${JSON.stringify(jsonData)}`);
+               //   console.log(`Nuevo registro insertado correctamente en la nueva base de datos: ${JSON.stringify(jsonData)}`);
                 }
                 newDbConnection.end(); // Cerrar conexión aquí
               });
@@ -164,7 +164,7 @@ const checkAndInsertData = async (jsonData) => {
                 if (err) {
                   console.error('Error al insertar los datos en la nueva base de datos:', err);
                 } else {
-                  console.log(`Tabla creada y datos insertados correctamente en la nueva base de datos: ${JSON.stringify(jsonData)}`);
+           //       console.log(`Tabla creada y datos insertados correctamente en la nueva base de datos: ${JSON.stringify(jsonData)}`);
                 }
                 newDbConnection.end(); // Cerrar conexión aquí
               });
