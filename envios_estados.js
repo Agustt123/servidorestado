@@ -7,7 +7,7 @@ const RABBITMQ_URL = 'amqp://lightdata:QQyfVBKRbw6fBb@158.69.131.226:5672';
 const QUEUE_NAME = 'srvshipmltosrvstates';
 
 const newDbConfig = {
-  host: '10.70.0.69',
+  host: 'localhost',
   user: 'userdata2',
   password: 'pt78pt79',
   database: 'dataestaos',
