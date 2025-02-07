@@ -15,12 +15,12 @@ redisClient.on('error', (err) => {
 
 (async () => {
     await redisClient.connect();
-    console.log('Redis conectado');
+  //  console.log('Redis conectado');
 })();
 
 async function getConnection(idempresa) {
     try {
-        console.log("idempresa recibido:", idempresa);
+       // console.log("idempresa recibido:", idempresa);
 
         // Validación del tipo de idempresa
         if (typeof idempresa !== 'string' && typeof idempresa !== 'number') {
@@ -42,7 +42,7 @@ async function getConnection(idempresa) {
             throw new Error(`No se encontró la configuración de la empresa con ID: ${idempresa}`);
         }
 
-        console.log("Configuración de la empresa encontrada:", empresa);
+     //   console.log("Configuración de la empresa encontrada:", empresa);
 
         // Configurar la conexión a la base de datos
         const config = {
@@ -52,7 +52,7 @@ async function getConnection(idempresa) {
             password: empresa.dbpass,           // Contraseña desde Redis
         };
 
-        console.log("Configuración de la conexión:", config);
+        //console.log("Configuración de la conexión:", config);
 
         return mysql.createConnection(config);
     } catch (error) {
