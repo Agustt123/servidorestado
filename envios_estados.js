@@ -72,10 +72,9 @@ const listenToQueue2 = async () => {
 
 // Función para insertar los datos en la nueva base de datos
 const checkAndInsertData = async (jsonData) => {
-  const { didempresa, didenvio, estado, subestado, estadoML, fecha } = jsonData;
+  const { didempresa, didenvio, estado, subestado, estadoML, fecha, quien } = jsonData;
   const superado = jsonData.superado || 0;
   const elim = jsonData.elim || 0;
-  const quien = jsonData.quien || 0;
   const formattedFecha = moment(fecha).format('YYYY-MM-DD HH:mm:ss'); 
   const tableName = `estados_${didempresa}`;
 
@@ -85,7 +84,7 @@ const checkAndInsertData = async (jsonData) => {
     // Conexión a la base de datos actual para obtener el chofer asignado
     dbConnection = await getConnection(didempresa);
     const getChoferAsignadoQuery = `SELECT choferAsignado FROM envios WHERE elim = 0 AND superado = 0 AND did = ?`;
-
+    
     const [choferResults] = await dbConnection.query(getChoferAsignadoQuery, [didenvio]);
     const choferAsignado = choferResults.length > 0 ? choferResults[0].choferAsignado : 0;
 
