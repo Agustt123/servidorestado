@@ -86,12 +86,12 @@ const checkAndInsertData = async (jsonData) => {
     const getChoferAsignadoQuery = `SELECT choferAsignado FROM envios WHERE elim = 0 AND superado = 0 AND did = ?`;
     
     const choferResults = await dbConnection.query(getChoferAsignadoQuery, [didenvio]);
-    if (!Array.isArray(choferResults) || choferResults.length === 0) {
-      console.error('No se encontraron resultados para el chofer:', choferResults);
-      // Maneja el caso donde no hay resultados
-      return; // O asigna un valor por defecto a choferAsignado
-    }
-    const choferAsignado = choferResults.length > 0 ? choferResults[0].choferAsignado : 0;
+    console.log('Resultados de la consulta de chofer:', choferResults);
+
+    // Asignar 0 si no se encuentran resultados
+    const choferAsignado = (Array.isArray(choferResults) && choferResults.length > 0)
+      ? choferResults[0].choferAsignado 
+      : 0;
 
     // Verificar si la tabla existe
     const [results] = await pool.query(`SHOW TABLES LIKE ?`, [tableName]);
@@ -150,6 +150,7 @@ const checkAndInsertData = async (jsonData) => {
     }
   }
 };
+
 
 app.get('/', (req, res) => {
   res.status(200).json({
