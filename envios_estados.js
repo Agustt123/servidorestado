@@ -11,7 +11,7 @@ const newDbConfig = {
   user: 'userdata2',
   password: 'pt78pt79',
   database: 'dataestaos',
-  port: 44337
+//  port: 44337
 };
 
 const app = express();
