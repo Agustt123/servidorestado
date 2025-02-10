@@ -1,8 +1,9 @@
 const amqp = require('amqplib');
 const express = require('express');
 const { redisClient, getConnection } = require('./dbconfig');
-const mysql = require('mysql2'); // Usar mysql2 para mejor manejo de promesas
+const mysql = require('mysql2/promise'); // Usar mysql2 con promesas
 const moment = require('moment'); 
+
 const RABBITMQ_URL = 'amqp://lightdata:QQyfVBKRbw6fBb@158.69.131.226:5672';
 const QUEUE_NAME = 'srvshipmltosrvstates';
 
@@ -11,8 +12,13 @@ const newDbConfig = {
   user: 'userdata2',
   password: 'pt78pt79',
   database: 'dataestaos',
-//  port: 44337
 };
+
+// Crear un pool de conexiones
+const pool = mysql.createPool({
+  ...newDbConfig,
+  connectionLimit: 10, // Limitar a 10 conexiones
+});
 
 const app = express();
 
@@ -27,6 +33,8 @@ const listenToQueue2 = async () => {
       channel = await connection.createChannel();
       await channel.assertQueue(QUEUE_NAME, { durable: true });
 
+      // Configurar el prefetch para procesar hasta 25 mensajes
+      await channel.prefetch(25);
       console.log(`Esperando mensajes en la cola ${QUEUE_NAME}...`);
 
       channel.consume(QUEUE_NAME, async (msg) => {
@@ -78,111 +86,58 @@ const checkAndInsertData = async (jsonData) => {
     dbConnection = await getConnection(didempresa);
     const getChoferAsignadoQuery = `SELECT choferAsignado FROM envios WHERE elim = 0 AND superado = 0 AND did = ?`;
 
-    dbConnection.query(getChoferAsignadoQuery, [didenvio], async (err, choferResults) => {
-      if (err) {
-        console.error('Error al obtener el choferAsignado:', err);
-        return;
-      }
-      const choferAsignado = choferResults.length > 0 ? choferResults[0].choferAsignado : 0;
+    const [choferResults] = await dbConnection.query(getChoferAsignadoQuery, [didenvio]);
+    const choferAsignado = choferResults.length > 0 ? choferResults[0].choferAsignado : 0;
 
-      // Crear conexión a la nueva base de datos
-      const newDbConnection = mysql.createConnection(newDbConfig);
-      newDbConnection.connect((err) => {
-        if (err) {
-          console.error('Error conectando a la nueva base de datos:', err);
-          return;
-        }
+    // Verificar si la tabla existe
+    const [results] = await pool.query(`SHOW TABLES LIKE ?`, [tableName]);
 
-        const queryTableExist = `SHOW TABLES LIKE ?`;
-        newDbConnection.query(queryTableExist, [tableName], (err, results) => {
-          if (err) {
-            console.error('Error al verificar la existencia de la tabla en la nueva base de datos:', err);
-            newDbConnection.end(); // Cerrar conexión aquí
-            return;
-          }
+    if (results.length > 0) {
+      // Verificar si el didEnvio ya existe
+      const [existingResults] = await pool.query(`SELECT * FROM ${tableName} WHERE didEnvio = ?`, [didenvio]);
 
-          if (results.length > 0) {
-            // Verificar si el didEnvio ya existe
-            const checkExistingQuery = `SELECT * FROM ${tableName} WHERE didEnvio = ?`;
-            newDbConnection.query(checkExistingQuery, [didenvio], (err, existingResults) => {
-              if (err) {
-                console.error('Error al verificar el didEnvio en la nueva base de datos:', err);
-                newDbConnection.end(); // Cerrar conexión aquí
-                return;
-              }
+      if (existingResults.length > 0) {
+        // Actualizar solo el campo superado
+        await pool.query(`UPDATE ${tableName} SET superado = ? WHERE didEnvio = ?`, [1, didenvio]);
+        console.log(`Campo superado actualizado a 1 en la nueva base de datos: ${JSON.stringify(jsonData)}`);
+      } 
+      
+      // Insertar nuevo registro con los nuevos datos
+      await pool.query(`
+        INSERT INTO ${tableName} (didEnvio, operador, estado, estadoML, subestadoML, fecha, quien, superado, elim)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `, [didenvio, choferAsignado, estado, estadoML, subestado, formattedFecha, quien, superado, elim]);
+      console.log(`Nuevo registro insertado correctamente en la nueva base de datos: ${JSON.stringify(jsonData)}`);
+    } else {
+      // Crear tabla e insertar
+      await pool.query(`CREATE TABLE ${tableName} (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        didEnvio VARCHAR(255),
+        operador VARCHAR(255),
+        estado VARCHAR(255),
+        estadoML VARCHAR(255),
+        subestadoML VARCHAR(255),
+        fecha DATETIME,
+        autofecha TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        quien INT,
+        superado INT,
+        elim INT,
+        INDEX(didEnvio),
+        INDEX(operador),
+        INDEX(fecha),
+        INDEX(superado),
+        INDEX(elim),
+        INDEX(quien),
+        INDEX(estadoML),
+        INDEX(subestadoML)
+      )`);
 
-              if (existingResults.length > 0) {
-                // Actualizar solo el campo superado
-                const updateQuery = `UPDATE ${tableName} SET superado = ? WHERE didEnvio = ?`;
-                newDbConnection.query(updateQuery, [1, didenvio], (err) => {
-                  if (err) {
-                    console.error('Error al actualizar el campo superado en la nueva base de datos:', err);
-                  } else {
-                    console.log(`Campo superado actualizado a 1 en la nueva base de datos: ${JSON.stringify(jsonData)}`);
-                  }
-                });
-              } 
-              // Insertar nuevo registro con los nuevos datos
-              const insertQuery = `
-                INSERT INTO ${tableName} (didEnvio, operador, estado, estadoML, subestadoML, fecha, quien, superado, elim)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-              `;
-              newDbConnection.query(insertQuery, [didenvio, choferAsignado, estado, estadoML, subestado, formattedFecha, quien, superado, elim], (err) => {
-                if (err) {
-                  console.error('Error al insertar los nuevos datos en la nueva base de datos:', err);
-                } else {
-                  console.log(`Nuevo registro insertado correctamente en la nueva base de datos: ${JSON.stringify(jsonData)}`);
-                }
-                newDbConnection.end(); // Cerrar conexión aquí
-              });
-            });
-          } else {
-            // Crear tabla e insertar
-            const createTableQuery = `CREATE TABLE ${tableName} (
-              id INT AUTO_INCREMENT PRIMARY KEY,
-              didEnvio VARCHAR(255),
-              operador VARCHAR(255),
-              estado VARCHAR(255),
-              estadoML VARCHAR(255),
-              subestadoML VARCHAR(255),
-              fecha DATETIME,
-              autofecha TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-              quien INT,
-              superado INT,
-              elim INT,
-              INDEX(didEnvio),
-              INDEX(operador),
-              INDEX(fecha),
-              INDEX(superado),
-              INDEX(elim),
-              INDEX(quien),
-              INDEX(estadoML),
-              INDEX(subestadoML)
-            )`;
-            newDbConnection.query(createTableQuery, (err) => {
-              if (err) {
-                console.error('Error al crear la tabla en la nueva base de datos:', err);
-                newDbConnection.end(); // Cerrar conexión aquí
-                return;
-              }
-
-              const insertQuery = `
-                INSERT INTO ${tableName} (didEnvio, operador, estado, estadoML, subestadoML, fecha, quien, superado, elim)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-              `;
-              newDbConnection.query(insertQuery, [didenvio, choferAsignado, estado, estadoML, subestado, formattedFecha, quien, superado, elim], (err) => {
-                if (err) {
-                  console.error('Error al insertar los datos en la nueva base de datos:', err);
-                } else {
-                  console.log(`Tabla creada y datos insertados correctamente en la nueva base de datos: ${JSON.stringify(jsonData)}`);
-                }
-                newDbConnection.end(); // Cerrar conexión aquí
-              });
-            });
-          }
-        });
-      });
-    });
+      await pool.query(`
+        INSERT INTO ${tableName} (didEnvio, operador, estado, estadoML, subestadoML, fecha, quien, superado, elim)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `, [didenvio, choferAsignado, estado, estadoML, subestado, formattedFecha, quien, superado, elim]);
+      console.log(`Tabla creada y datos insertados correctamente en la nueva base de datos: ${JSON.stringify(jsonData)}`);
+    }
   } catch (error) {
     console.error('Error en checkAndInsertData:', error);
   } finally {
@@ -195,7 +150,7 @@ const checkAndInsertData = async (jsonData) => {
 app.get('/', (req, res) => {
   res.status(200).json({
     estado: true,
-    mesanje: "Hola chris"
+    mensaje: "Hola chris"
   });
 });
 
