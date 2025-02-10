@@ -35,17 +35,17 @@ const listenToQueue2 = async () => {
 
       // Configurar el prefetch para procesar hasta 25 mensajes
       await channel.prefetch(25);
-      console.log(`Esperando mensajes en la cola ${QUEUE_NAME}...`);
+  //    console.log(`Esperando mensajes en la cola ${QUEUE_NAME}...`);
 
       channel.consume(QUEUE_NAME, async (msg) => {
         if (msg !== null) {
           const jsonData = JSON.parse(msg.content.toString());
-          console.log('Datos recibidos:', jsonData);
+    //      console.log('Datos recibidos:', jsonData);
 
           try {
             await checkAndInsertData(jsonData);
             channel.ack(msg);
-            console.log('Mensaje procesado.');
+      //      console.log('Mensaje procesado.');
           } catch (error) {
             console.error('Error procesando el mensaje:', error);
             channel.nack(msg); // No confirmar el mensaje si hubo un error
@@ -54,15 +54,15 @@ const listenToQueue2 = async () => {
       });
 
       connection.on('error', (err) => {
-        console.error('Error en la conexión de RabbitMQ:', err);
+        //console.error('Error en la conexión de RabbitMQ:', err);
       });
 
       connection.on('close', () => {
-        console.error('Conexión a RabbitMQ cerrada, intentando reconectar...');
+        //console.error('Conexión a RabbitMQ cerrada, intentando reconectar...');
         setTimeout(connect, 5000); // Intentar reconectar cada 5 segundos
       });
     } catch (error) {
-      console.error('Error conectando a RabbitMQ:', error);
+      //console.error('Error conectando a RabbitMQ:', error);
       setTimeout(connect, 5000); // Intentar reconectar cada 5 segundos
     }
   };
@@ -86,7 +86,7 @@ const checkAndInsertData = async (jsonData) => {
     const getChoferAsignadoQuery = `SELECT choferAsignado FROM envios WHERE elim = 0 AND superado = 0 AND did = ?`;
     
     const choferResults = await dbConnection.query(getChoferAsignadoQuery, [didenvio]);
-    console.log('Resultados de la consulta de chofer:', choferResults);
+    //console.log('Resultados de la consulta de chofer:', choferResults);
 
     // Asignar 0 si no se encuentran resultados
     const choferAsignado = (Array.isArray(choferResults) && choferResults.length > 0)
@@ -103,7 +103,7 @@ const checkAndInsertData = async (jsonData) => {
       if (existingResults.length > 0) {
         // Actualizar solo el campo superado
         await pool.query(`UPDATE ${tableName} SET superado = ? WHERE didEnvio = ?`, [1, didenvio]);
-        console.log(`Campo superado actualizado a 1 en la nueva base de datos: ${JSON.stringify(jsonData)}`);
+      //  console.log(`Campo superado actualizado a 1 en la nueva base de datos: ${JSON.stringify(jsonData)}`);
       } 
       
       // Insertar nuevo registro con los nuevos datos
@@ -111,7 +111,7 @@ const checkAndInsertData = async (jsonData) => {
         INSERT INTO ${tableName} (didEnvio, operador, estado, estadoML, subestadoML, fecha, quien, superado, elim)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
       `, [didenvio, choferAsignado, estado, estadoML, subestado, formattedFecha, quien, superado, elim]);
-      console.log(`Nuevo registro insertado correctamente en la nueva base de datos: ${JSON.stringify(jsonData)}`);
+      //console.log(`Nuevo registro insertado correctamente en la nueva base de datos: ${JSON.stringify(jsonData)}`);
     } else {
       // Crear tabla e insertar
       await pool.query(`CREATE TABLE ${tableName} (
@@ -140,7 +140,7 @@ const checkAndInsertData = async (jsonData) => {
         INSERT INTO ${tableName} (didEnvio, operador, estado, estadoML, subestadoML, fecha, quien, superado, elim)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
       `, [didenvio, choferAsignado, estado, estadoML, subestado, formattedFecha, quien, superado, elim]);
-      console.log(`Tabla creada y datos insertados correctamente en la nueva base de datos: ${JSON.stringify(jsonData)}`);
+      //console.log(`Tabla creada y datos insertados correctamente en la nueva base de datos: ${JSON.stringify(jsonData)}`);
     }
   } catch (error) {
     console.error('Error en checkAndInsertData:', error);
@@ -168,5 +168,3 @@ app.listen(PORT, () => {
 listenToQueue2();
 
 module.exports = { listenToQueue2 };
-
-
