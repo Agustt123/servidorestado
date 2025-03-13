@@ -45,7 +45,7 @@ const listenToQueue2 = async () => {
           try {
             await checkAndInsertData(jsonData);
             await updateEstadoRedis(jsonData.didempresa,jsonData.didenvio,jsonData.estado)
-           // channel.ack(msg);
+            channel.ack(msg);
       //      console.log('Mensaje procesado.');
           } catch (error) {
             console.error('Error procesando el mensaje:', error);
