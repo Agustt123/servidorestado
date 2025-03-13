@@ -40,13 +40,13 @@ const listenToQueue2 = async () => {
       channel.consume(QUEUE_NAME, async (msg) => {
         if (msg !== null) {
           const jsonData = JSON.parse(msg.content.toString());
-    //      console.log('Datos recibidos:', jsonData);
+       console.log('Datos recibidos:', jsonData);
 
           try {
             await checkAndInsertData(jsonData);
             await updateEstadoRedis(jsonData.didempresa,jsonData.didenvio,jsonData.estado)
             channel.ack(msg);
-      //      console.log('Mensaje procesado.');
+           console.log('Mensaje procesado.');
           } catch (error) {
             console.error('Error procesando el mensaje:', error);
             channel.nack(msg); // No confirmar el mensaje si hubo un error
