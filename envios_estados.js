@@ -1,6 +1,6 @@
 const amqp = require('amqplib');
 const express = require('express');
-const { redisClient, getConnection } = require('./dbconfig');
+const { redisClient, getConnection, updateEstadoRedis } = require('./dbconfig');
 const mysql = require('mysql2/promise'); // Usar mysql2 con promesas
 const moment = require('moment'); 
 
@@ -44,7 +44,8 @@ const listenToQueue2 = async () => {
 
           try {
             await checkAndInsertData(jsonData);
-            channel.ack(msg);
+            await updateEstadoRedis(jsonData.didempresa,jsonData.didenvio,jsonData.estado)
+           // channel.ack(msg);
       //      console.log('Mensaje procesado.');
           } catch (error) {
             console.error('Error procesando el mensaje:', error);

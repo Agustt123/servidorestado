@@ -89,5 +89,29 @@ async function getFromRedis(key) {
         };
     }
 }
+ async function updateEstadoRedis(empresaId, envioId, estado) {
+    let DWRTE = await redisClient.get('DWRTE');
 
-module.exports = { getConnection, getFromRedis, redisClient };
+    DWRTE = DWRTE ? JSON.parse(DWRTE) : {};
+    const empresaKey = `e.${empresaId}`;
+    const envioKey = `en.${envioId}`;
+
+    // Si la empresa no existe, la creamos
+    if (!DWRTE[empresaKey]) {
+        DWRTE[empresaKey] = {};
+    }
+
+    // Si el envío no existe, lo creamos solo con el estado
+    if (!DWRTE[empresaKey][envioKey]) {
+        DWRTE[empresaKey][envioKey] = { estado };
+    } else {
+        // Si ya existe el envío, solo actualizamos el estado sin tocar el chofer
+        DWRTE[empresaKey][envioKey].estado = estado;
+    }
+
+    await redisClient.set('DWRTE', JSON.stringify(DWRTE));
+}
+
+
+
+module.exports = { getConnection, getFromRedis, redisClient ,updateEstadoRedis};
