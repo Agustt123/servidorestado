@@ -91,26 +91,26 @@ async function getFromRedis(key) {
 }
  async function updateEstadoRedis(empresaId, envioId, estado) {
     let DWRTE = await redisClient.get('DWRTE');
-
     DWRTE = DWRTE ? JSON.parse(DWRTE) : {};
+
     const empresaKey = `e.${empresaId}`;
     const envioKey = `en.${envioId}`;
+    const ahora = Date.now(); // Guardamos el timestamp actual
 
-    // Si la empresa no existe, la creamos
     if (!DWRTE[empresaKey]) {
         DWRTE[empresaKey] = {};
     }
 
-    // Si el envío no existe, lo creamos solo con el estado
     if (!DWRTE[empresaKey][envioKey]) {
-        DWRTE[empresaKey][envioKey] = { estado };
+        DWRTE[empresaKey][envioKey] = { estado, timestamp: ahora };
     } else {
-        // Si ya existe el envío, solo actualizamos el estado sin tocar el chofer
         DWRTE[empresaKey][envioKey].estado = estado;
+        // No actualizamos el timestamp para no resetear la antigüedad
     }
 
     await redisClient.set('DWRTE', JSON.stringify(DWRTE));
 }
+
 
 
 
