@@ -70,6 +70,36 @@ const listenToQueue2 = async () => {
 
   await connect(); // Iniciar la conexión
 };
+async function limpiarEnviosViejos() {
+    let DWRTE = await redisClient.get('DWRTE');
+    if (!DWRTE) return;
+    
+    DWRTE = JSON.parse(DWRTE);
+    const ahora = Date.now();
+    const limite = 14 * 24 * 60 * 60 * 1000; // 14 días en milisegundos
+
+    let cambios = false;
+
+    for (const empresaKey in DWRTE) {
+        for (const envioKey in DWRTE[empresaKey]) {
+            if (DWRTE[empresaKey][envioKey].timestamp < ahora - limite) {
+                delete DWRTE[empresaKey][envioKey]; // Eliminamos el envío
+                cambios = true;
+            }
+        }
+
+        // Si la empresa ya no tiene envíos, eliminarla también
+        if (Object.keys(DWRTE[empresaKey]).length === 0) {
+            delete DWRTE[empresaKey];
+        }
+    }
+
+    if (cambios) {
+        await redisClient.set('DWRTE', JSON.stringify(DWRTE));
+    }
+}
+
+
 
 // Función para insertar los datos en la nueva base de datos
 const checkAndInsertData = async (jsonData) => {
@@ -167,5 +197,10 @@ app.listen(PORT, () => {
 
 // Iniciar la escucha de la cola
 listenToQueue2();
+setInterval(limpiarEnviosViejos, 24 * 60 * 60 * 1000);
+
+
+limpiarEnviosViejos();
+
 
 module.exports = { listenToQueue2 };
