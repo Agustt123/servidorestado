@@ -6,7 +6,7 @@ const moment = require('moment');
 const { updateProducction } = require('./controller/updateProducction');
 
 const RABBITMQ_URL = 'amqp://lightdata:QQyfVBKRbw6fBb@158.69.131.226:5672';
-const QUEUE_NAME = 'estados_production';
+const QUEUE_NAME = 'srvshipmltosrvstates';
 
 const newDbConfig = {
   host: 'localhost',
