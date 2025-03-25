@@ -3,9 +3,10 @@ const express = require('express');
 const { redisClient, getConnection, updateEstadoRedis } = require('./dbconfig');
 const mysql = require('mysql2/promise'); // Usar mysql2 con promesas
 const moment = require('moment'); 
+const { updateProducction } = require('./controller/updateProducction');
 
 const RABBITMQ_URL = 'amqp://lightdata:QQyfVBKRbw6fBb@158.69.131.226:5672';
-const QUEUE_NAME = 'srvshipmltosrvstates';
+const QUEUE_NAME = 'estados_production';
 
 const newDbConfig = {
   host: 'localhost',
@@ -35,21 +36,30 @@ const listenToQueue2 = async () => {
 
       // Configurar el prefetch para procesar hasta 25 mensajes
       await channel.prefetch(1000);
-  //    console.log(`Esperando mensajes en la cola ${QUEUE_NAME}...`);
+   console.log(`Esperando mensajes en la cola ${QUEUE_NAME}...`);
 
       channel.consume(QUEUE_NAME, async (msg) => {
         if (msg !== null) {
           const jsonData = JSON.parse(msg.content.toString());
-       //console.log('Datos recibidos:', jsonData);
+      console.log('Datos recibidos:', jsonData);
 
           try {
-            await checkAndInsertData(jsonData);
+        await checkAndInsertData(jsonData);
+         
             await updateEstadoRedis(jsonData.didempresa,jsonData.didenvio,jsonData.estado)
+
+            if(jsonData.operacion)
+            {
+              await updateProducction(jsonData);
+
+            }
             channel.ack(msg);
          //  console.log('Mensaje procesado.');
           } catch (error) {
+            console.log(error.message);
+            
            // console.error('Error procesando el mensaje:', error);
-            channel.nack(msg); // No confirmar el mensaje si hubo un error
+            channel.ack(msg); // No confirmar el mensaje si hubo un error
           }
         }
       });

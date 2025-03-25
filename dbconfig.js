@@ -111,7 +111,31 @@ async function getFromRedis(key) {
 
     await redisClient.set('DWRTE', JSON.stringify(DWRTE));
 }
+ async function executeQuery(connection, query, values, log = false) {
+    if (log) {
+        logYellow(`Ejecutando query: ${query} con valores: ${values}`);
+    }
+    try {
+        return new Promise((resolve, reject) => {
+            connection.query(query, values, (err, results) => {
+                if (err) {
+                    if (log) {
+                        logRed(`Error en executeQuery: ${err.message}`);
+                    }
+                    reject(err);
+                } else {
+                    if (log) {
+                        logYellow(`Query ejecutado con éxito: ${JSON.stringify(results)}`);
+                    }
+                    resolve(results);
+                }
+            });
+        });
+    } catch (error) {
+        logRed(`Error en executeQuery: ${error.stack}`);
+        throw error;
+    }
+}
 
 
-
-module.exports = { getConnection, getFromRedis, redisClient ,updateEstadoRedis};
+module.exports = { getConnection, getFromRedis, redisClient ,updateEstadoRedis,executeQuery};
