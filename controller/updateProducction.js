@@ -42,11 +42,16 @@ const updateProducction = async (jsonData) => {
     `;
     await executeQuery(dbConnection, sqlInsertHistorial, [didenvio, estado, didCadete, fechaT, didCadete]);
 
+
 } catch (error) {
     logRed(`Error en updateLastShipmentState: ${error.stack}`);
     throw error;
-} finally {
-    dbConnection.end();
+} finally { 
+    if (dbConnection){
+
+
+        dbConnection.end();
+    }
 }
 };
 
