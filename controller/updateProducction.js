@@ -31,30 +31,27 @@ const updateProducction = async (jsonData) => {
 
 
     const didCadete = cadeteResults.length > 0 ? cadeteResults[0].quien : 0;
-    const fechaT = fecha || new Date().toISOString().slice(0, 19).replace('T', ' ');
 
-    // Convertir fechaT a un objeto Date
-    const fechaDate = new Date(fechaT);
+    const fechaT = fecha || new Date().toISOString().slice(0, 19).replace('T', ' ');
+   
     
-    // Sumar 3 horas
-    fechaDate.setHours(fechaDate.getHours() );
-    
-    // Convertir de nuevo a formato ISO (si es necesario) o a tu formato deseado
-    const nuevaFechaT = fechaDate.toISOString().slice(0, 19).replace('T', ' ');
-    
-console.log(nuevaFechaT, "fdssdasd");
 
     const sqlInsertHistorial = `
         INSERT INTO envios_historial (didEnvio, estado, quien, fecha, didCadete) 
         VALUES (?, ?, ?, ?, ?)
     `;
-    await executeQuery(dbConnection, sqlInsertHistorial, [didenvio, estado, didCadete, nuevaFechaT, didCadete]);
+    await executeQuery(dbConnection, sqlInsertHistorial, [didenvio, estado, didCadete, fechaT, didCadete]);
+
 
 } catch (error) {
     logRed(`Error en updateLastShipmentState: ${error.stack}`);
     throw error;
-} finally {
-    dbConnection.end();
+} finally { 
+    if (dbConnection){
+
+
+        dbConnection.end();
+    }
 }
 };
 

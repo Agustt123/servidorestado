@@ -35,7 +35,7 @@ const listenToQueue2 = async () => {
       await channel.assertQueue(QUEUE_NAME, { durable: true });
 
       // Configurar el prefetch para procesar hasta 25 mensajes
-      await channel.prefetch(20000);
+      await channel.prefetch(1000);
    console.log(`Esperando mensajes en la cola ${QUEUE_NAME}...`);
 
       channel.consume(QUEUE_NAME, async (msg) => {
