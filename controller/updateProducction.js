@@ -37,11 +37,12 @@ const updateProducction = async (jsonData) => {
     const fechaDate = new Date(fechaT);
     
     // Sumar 3 horas
-    fechaDate.setHours(fechaDate.getHours() + 3);
+    fechaDate.setHours(fechaDate.getHours() );
     
     // Convertir de nuevo a formato ISO (si es necesario) o a tu formato deseado
     const nuevaFechaT = fechaDate.toISOString().slice(0, 19).replace('T', ' ');
     
+console.log(nuevaFechaT, "fdssdasd");
 
     const sqlInsertHistorial = `
         INSERT INTO envios_historial (didEnvio, estado, quien, fecha, didCadete) 
