@@ -50,16 +50,11 @@ console.log(nuevaFechaT, "fdssdasd");
     `;
     await executeQuery(dbConnection, sqlInsertHistorial, [didenvio, estado, didCadete, nuevaFechaT, didCadete]);
 
-
 } catch (error) {
     logRed(`Error en updateLastShipmentState: ${error.stack}`);
     throw error;
-} finally { 
-    if (dbConnection){
-
-
-        dbConnection.end();
-    }
+} finally {
+    dbConnection.end();
 }
 };
 
