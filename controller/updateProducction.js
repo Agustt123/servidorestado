@@ -47,11 +47,11 @@ const updateProducction = async (jsonData) => {
     logRed(`Error en updateLastShipmentState: ${error.stack}`);
     throw error;
 } finally { 
-    if (dbConnection){
-
+   
+if(dbConnection){
 
         dbConnection.end();
-    }
+}
 }
 };
 
