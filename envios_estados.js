@@ -8,11 +8,14 @@ const { updateProducction } = require('./controller/updateProducction');
 const RABBITMQ_URL = 'amqp://lightdata:QQyfVBKRbw6fBb@158.69.131.226:5672';
 const QUEUE_NAME = 'srvshipmltosrvstates';
 
+
 const newDbConfig = {
-  host: 'localhost',
+ // host: '149.56.182.49',
+ host: 'localhost',
   user: 'userdata2',
   password: 'pt78pt79',
   database: 'dataestaos',
+ // port: 44337
 };
 
 // Crear un pool de conexiones
@@ -25,9 +28,10 @@ const app = express();
 
 // Función para escuchar los mensajes de la cola
 const listenToQueue2 = async () => {
+  
   let connection;
   let channel;
-
+  
   const connect = async () => {
     try {
       connection = await amqp.connect(RABBITMQ_URL);
@@ -35,31 +39,34 @@ const listenToQueue2 = async () => {
       await channel.assertQueue(QUEUE_NAME, { durable: true });
 
       // Configurar el prefetch para procesar hasta 25 mensajes
-      await channel.prefetch(1000);
+      await channel.prefetch(20000);
    console.log(`Esperando mensajes en la cola ${QUEUE_NAME}...`);
 
       channel.consume(QUEUE_NAME, async (msg) => {
         if (msg !== null) {
           const jsonData = JSON.parse(msg.content.toString());
-      console.log('Datos recibidos:', jsonData);
-
+          console.log('Datos recibidos:', jsonData);
+          
           try {
-        await checkAndInsertData(jsonData);
-         
-            await updateEstadoRedis(jsonData.didempresa,jsonData.didenvio,jsonData.estado)
-
-            if(jsonData.operacion)
-            {
-             // await updateProducction(jsonData);
-
-    
-            }
-         //  console.log('Mensaje procesado.');
+           await checkAndInsertData(jsonData);
+               await updateEstadoRedis(jsonData.didempresa,jsonData.didenvio,jsonData.estado)
+               console.log("pase");
+               
+            
+           if(jsonData.operacion)
+             {
+                 await updateProducction(jsonData);
+                
+                
+              }
+              console.log('Mensaje procesado.');
+            
+            console.log("holaaa");
+            channel.ack(msg); // No confirmar el mensaje si hubo un error
           } catch (error) {
             console.log(error.message);
             
            // console.error('Error procesando el mensaje:', error);
-            channel.ack(msg); // No confirmar el mensaje si hubo un error
           }
         }
       });
@@ -119,9 +126,9 @@ const checkAndInsertData = async (jsonData) => {
   const formattedFecha = moment(fecha).format('YYYY-MM-DD HH:mm:ss'); 
   const tableName = `estados_${didempresa}`;
 
-
-  const  dbConnection = await getConnection(didempresa);
-  try {
+let dbConnection
+try {
+    dbConnection = await getConnection(didempresa);
     // Conexión a la base de datos actual para obtener el chofer asignado
     const getChoferAsignadoQuery = `SELECT choferAsignado FROM envios WHERE elim = 0 AND superado = 0 AND did = ?`;
     
