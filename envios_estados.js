@@ -52,8 +52,8 @@ const listenToQueue2 = async () => {
             {
              // await updateProducction(jsonData);
 
+    
             }
-            channel.ack(msg);
          //  console.log('Mensaje procesado.');
           } catch (error) {
             console.log(error.message);
