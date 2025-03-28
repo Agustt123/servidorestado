@@ -119,11 +119,10 @@ const checkAndInsertData = async (jsonData) => {
   const formattedFecha = moment(fecha).format('YYYY-MM-DD HH:mm:ss'); 
   const tableName = `estados_${didempresa}`;
 
-  let dbConnection;
 
+  const  dbConnection = await getConnection(didempresa);
   try {
     // Conexión a la base de datos actual para obtener el chofer asignado
-    dbConnection = await getConnection(didempresa);
     const getChoferAsignadoQuery = `SELECT choferAsignado FROM envios WHERE elim = 0 AND superado = 0 AND did = ?`;
     
     const choferResults = await dbConnection.query(getChoferAsignadoQuery, [didenvio]);
@@ -186,9 +185,9 @@ const checkAndInsertData = async (jsonData) => {
   } catch (error) {
     console.error('Error en checkAndInsertData:', error);
   } finally {
-    if (dbConnection) {
+ 
       dbConnection.end(); // Asegúrate de cerrar la conexión a la base de datos actual
-    }
+    
   }
 };
 
