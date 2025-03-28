@@ -11,48 +11,46 @@ const updateProducction = async (jsonData) => {
         UPDATE envios_historial 
         SET superado = 1 
         WHERE superado = 0 AND didEnvio = ?
-    `;
-    await executeQuery(dbConnection, sqlSuperado, [didenvio]);
+        `;
+        await executeQuery(dbConnection, sqlSuperado, [didenvio]);
 
-    const sqlActualizarEnvios = `
+        const sqlActualizarEnvios = `
         UPDATE envios 
         SET estado_envio = ? 
         WHERE superado = 0 AND did = ?
-    `;
-    await executeQuery(dbConnection, sqlActualizarEnvios, [estado, didenvio]);
+        `;
+        await executeQuery(dbConnection, sqlActualizarEnvios, [estado, didenvio]);
 
-    const sqlDidCadete = `
+        const sqlDidCadete = `
         SELECT quien 
         FROM envios_asignaciones 
         WHERE didEnvio = ? AND superado = 0 AND elim = 0
-    `;
-    const cadeteResults = await executeQuery(dbConnection, sqlDidCadete, [didenvio]);
+        `;
+        const cadeteResults = await executeQuery(dbConnection, sqlDidCadete, [didenvio]);
 
+        const didCadete = cadeteResults.length > 0 ? cadeteResults[0].quien : 0;
 
+        const fechaT = fecha || new Date().toISOString().slice(0, 19).replace('T', ' ');
 
-    const didCadete = cadeteResults.length > 0 ? cadeteResults[0].quien : 0;
-
-    const fechaT = fecha || new Date().toISOString().slice(0, 19).replace('T', ' ');
-   
-    
-
-    const sqlInsertHistorial = `
+        const sqlInsertHistorial = `
         INSERT INTO envios_historial (didEnvio, estado, quien, fecha, didCadete) 
         VALUES (?, ?, ?, ?, ?)
-    `;
-    await executeQuery(dbConnection, sqlInsertHistorial, [didenvio, estado, didCadete, fechaT, didCadete]);
+        `;
+        await executeQuery(dbConnection, sqlInsertHistorial, [didenvio, estado, didCadete, fechaT, didCadete]);
 
-
-} catch (error) {
-    logRed(`Error en updateLastShipmentState: ${error.stack}`);
-    throw error;
-} finally { 
-    if (dbConnection){
-
-
-        dbConnection.end();
+    } catch (error) {
+        logRed(`Error en updateLastShipmentState: ${error.stack}`);
+        throw error;
+    } finally {
+        // Cerrar la conexión si existe
+        if (dbConnection) {
+            try {
+                await dbConnection.end(); // Asegúrate de usar await si end es una promesa
+            } catch (closeError) {
+                logRed(`Error cerrando la conexión: ${closeError.stack}`);
+            }
+        }
     }
-}
 };
 
 module.exports = { updateProducction };
