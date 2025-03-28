@@ -3,7 +3,7 @@ const { getConnection, executeQuery } = require("../dbconfig");
 const updateProducction = async (jsonData) => {
     const { didempresa, didenvio, estado, subestado, estadoML, fecha, quien } = jsonData;
     let dbConnection;
-    console.log(dbConnection,"sdadasdsadssadsad");
+    //console.log(dbConnection,"sdadasdsadssadsad");
     
 
     try {

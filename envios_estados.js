@@ -45,12 +45,12 @@ const listenToQueue2 = async () => {
       channel.consume(QUEUE_NAME, async (msg) => {
         if (msg !== null) {
           const jsonData = JSON.parse(msg.content.toString());
-          console.log('Datos recibidos:', jsonData);
+         // console.log('Datos recibidos:', jsonData);
           
           try {
            await checkAndInsertData(jsonData);
                await updateEstadoRedis(jsonData.didempresa,jsonData.didenvio,jsonData.estado)
-               console.log("pase");
+          //     console.log("pase");
                
             
            if(jsonData.operacion)
@@ -59,9 +59,9 @@ const listenToQueue2 = async () => {
                 
                 
               }
-              console.log('Mensaje procesado.');
+             // console.log('Mensaje procesado.');
             
-            console.log("holaaa");
+            //console.log("holaaa");
             channel.ack(msg); // No confirmar el mensaje si hubo un error
           } catch (error) {
             console.log(error.message);
