@@ -50,7 +50,7 @@ const listenToQueue2 = async () => {
 
             if(jsonData.operacion)
             {
-              await updateProducction(jsonData);
+             // await updateProducction(jsonData);
 
             }
             channel.ack(msg);
