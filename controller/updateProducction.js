@@ -34,7 +34,10 @@ const updateProducction = async (jsonData) => {
 
     const didCadete = cadeteResults.length > 0 ? cadeteResults[0].quien : 0;
 
-    const fechaT = fecha || new Date().toISOString().slice(0, 19).replace('T', ' ');
+    const now = new Date();
+    now.setHours(now.getHours() - 3);
+    const fechaT = fecha || now.toISOString().slice(0, 19).replace('T', ' ');
+    
    
     
 
