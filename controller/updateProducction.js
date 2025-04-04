@@ -33,12 +33,9 @@ const updateProducction = async (jsonData) => {
 
 
     const didCadete = cadeteResults.length > 0 ? cadeteResults[0].quien : 0;
-    const now = new Date();
-    const fechaT = new Date(now.toLocaleString("en-US", { timeZone: "America/Argentina/Buenos_Aires" }))
-      .toISOString()
-      .slice(0, 19)
-      .replace("T", " ");
-    
+    const now = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Argentina/Buenos_Aires" }));
+    now.setHours(now.getHours() - 3);
+    const fechaT = now.toISOString().slice(0, 19).replace("T", " ");
     
    
     
