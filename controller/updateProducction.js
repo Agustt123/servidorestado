@@ -36,7 +36,7 @@ const updateProducction = async (jsonData) => {
 
     const now = new Date();
     now.setHours(now.getHours() +3 );
-    const fechaT = fecha || now.toISOString().slice(0, 19).replace('T', ' ');
+    const fechaT =  now.toISOString().slice(0, 19).replace('T', ' ');
     
    
     
