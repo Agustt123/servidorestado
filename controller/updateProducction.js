@@ -37,14 +37,26 @@ const updateProducction = async (jsonData) => {
     now.setHours(now.getHours() - 3);
     const fechaT = now.toISOString().slice(0, 19).replace("T", " ");
     
-   
-    
+   if(jsonData.operador == "ml"){
 
     const sqlInsertHistorial = `
-        INSERT INTO envios_historial (didEnvio, estado, quien, fecha, didCadete) 
-        VALUES (?, ?, ?, ?, ?)
+        INSERT INTO envios_historial (didEnvio, estado, quien, fecha, didCadete,estadoML, subEstadoML)
+        VALUES (?, ?, ?, ?, ?, ?, ?) 
+  
     `;
-    await executeQuery(dbConnection, sqlInsertHistorial, [didenvio, estado, didCadete, fechaT, didCadete]);
+    await executeQuery(dbConnection, sqlInsertHistorial, [didenvio, estado, didCadete, fechaT, didCadete, estadoML, subestado]);
+
+   }
+   else{
+
+
+       const sqlInsertHistorial = `
+           INSERT INTO envios_historial (didEnvio, estado, quien, fecha, didCadete) 
+           VALUES (?, ?, ?, ?, ?)
+       `;
+       await executeQuery(dbConnection, sqlInsertHistorial, [didenvio, estado, didCadete, fechaT, didCadete]);
+   }
+
 
 
 } catch (error) {
