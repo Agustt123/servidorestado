@@ -37,7 +37,7 @@ const updateProducction = async (jsonData) => {
     now.setHours(now.getHours() - 3);
     const fechaT = now.toISOString().slice(0, 19).replace("T", " ");
     
-   if(jsonData.operador == "ml"){
+   if(jsonData.operacion == "ml"){
 
     const sqlInsertHistorial = `
         INSERT INTO envios_historial (didEnvio, estado, quien, fecha, didCadete,estadoML, subEstadoML)
