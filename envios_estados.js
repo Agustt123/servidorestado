@@ -15,7 +15,7 @@ const newDbConfig = {
   user: 'userdata2',
   password: 'pt78pt79',
   database: 'dataestaos',
- // port: 44337
+ //port: 44337
 };
 
 // Crear un pool de conexiones
@@ -125,6 +125,8 @@ const checkAndInsertData = async (jsonData) => {
   const elim = jsonData.elim || 0;
   const formattedFecha = moment(fecha).format('YYYY-MM-DD HH:mm:ss'); 
   const tableName = `estados_${didempresa}`;
+  let latitud=jsonData.latitud || 0;
+  let longitud=jsonData.longitud || 0;
 
 let dbConnection
 try {
@@ -155,9 +157,9 @@ try {
       
       // Insertar nuevo registro con los nuevos datos
       await pool.query(`
-        INSERT INTO ${tableName} (didEnvio, operador, estado, estadoML, subestadoML, fecha, quien, superado, elim)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `, [didenvio, choferAsignado, estado, estadoML, subestado, formattedFecha, quien, superado, elim]);
+        INSERT INTO ${tableName} (didEnvio, operador, estado, estadoML, subestadoML, fecha, quien, superado, elim,latitud,longitud)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?,?,?)
+      `, [didenvio, choferAsignado, estado, estadoML, subestado, formattedFecha, quien, superado, elim,latitud,longitud]);
       //console.log(`Nuevo registro insertado correctamente en la nueva base de datos: ${JSON.stringify(jsonData)}`);
     } else {
       // Crear tabla e insertar
@@ -173,6 +175,8 @@ try {
         quien INT,
         superado INT,
         elim INT,
+        latitud DOUBLE,
+     longitud DOUBLE,
         INDEX(didEnvio),
         INDEX(operador),
         INDEX(fecha),
@@ -184,9 +188,9 @@ try {
       )`);
 
       await pool.query(`
-        INSERT INTO ${tableName} (didEnvio, operador, estado, estadoML, subestadoML, fecha, quien, superado, elim)
+        INSERT INTO ${tableName} (didEnvio, operador, estado, estadoML, subestadoML, fecha, quien, superado, elim,latitud,longitud)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `, [didenvio, choferAsignado, estado, estadoML, subestado, formattedFecha, quien, superado, elim]);
+      `, [didenvio, choferAsignado, estado, estadoML, subestado, formattedFecha, quien, superado, elim,latitud,longitud]);
       //console.log(`Tabla creada y datos insertados correctamente en la nueva base de datos: ${JSON.stringify(jsonData)}`);
     }
   } catch (error) {
