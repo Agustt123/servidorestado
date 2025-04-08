@@ -35,7 +35,7 @@ const updateProducction = async (jsonData) => {
     const didCadete = cadeteResults.length > 0 ? cadeteResults[0].quien : 0;
     const now = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Argentina/Buenos_Aires" }));
     now.setHours(now.getHours() - 3);
-    const fechaT = now.toISOString().slice(0, 19).replace("T", " ");
+    const fechaT = fecha ||  now.toISOString().slice(0, 19).replace("T", " ");
     
    if(jsonData.operacion == "ml"){
 
@@ -44,7 +44,7 @@ const updateProducction = async (jsonData) => {
         VALUES (?, ?, ?, ?, ?, ?, ?) 
   
     `;
-    await executeQuery(dbConnection, sqlInsertHistorial, [didenvio, estado, didCadete, fechaT, didCadete, estadoML, subestado]);
+    await executeQuery(dbConnection, sqlInsertHistorial, [didenvio, estado, quien, fechaT, didCadete, estadoML, subestado]);
 
    }
    else{
@@ -54,7 +54,7 @@ const updateProducction = async (jsonData) => {
            INSERT INTO envios_historial (didEnvio, estado, quien, fecha, didCadete) 
            VALUES (?, ?, ?, ?, ?)
        `;
-       await executeQuery(dbConnection, sqlInsertHistorial, [didenvio, estado, didCadete, fechaT, didCadete]);
+       await executeQuery(dbConnection, sqlInsertHistorial, [didenvio, estado, quien, fechaT, didCadete]);
    }
 
 
