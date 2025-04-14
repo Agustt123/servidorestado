@@ -10,7 +10,7 @@ const QUEUE_NAME = 'srvshipmltosrvstates';
 
 
 const newDbConfig = {
- // host: '149.56.182.49',
+ //host: '149.56.182.49',
  host: 'localhost',
   user: 'userdata2',
   password: 'pt78pt79',
@@ -45,16 +45,18 @@ const listenToQueue2 = async () => {
       channel.consume(QUEUE_NAME, async (msg) => {
         if (msg !== null) {
           const jsonData = JSON.parse(msg.content.toString());
-         // console.log('Datos recibidos:', jsonData);
+       //  console.log('Datos recibidos:', jsonData);
           
           try {
            await checkAndInsertData(jsonData);
-               await updateEstadoRedis(jsonData.didempresa,jsonData.didenvio,jsonData.estado)
+            //   await updateEstadoRedis(jsonData.didempresa,jsonData.didenvio,jsonData.estado)
           //     console.log("pase");
                
             
            if(jsonData.operacion)
              {
+              console.log("pase operacion");
+             
                  await updateProducction(jsonData);
                 
                 

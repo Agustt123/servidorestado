@@ -1,5 +1,6 @@
 const { getConnection, executeQuery } = require("../dbconfig");
 
+
 const updateProducction = async (jsonData) => {
     const { didempresa, didenvio, estado, subestado, estadoML, fecha, quien,latitud,longitud } = jsonData;
     let dbConnection;
@@ -50,21 +51,27 @@ const updateProducction = async (jsonData) => {
 
    }
    else{
+    let lat = latitud
+    let long= longitud
+    if(lat == undefined || long == undefined){
+        lat = 0;
+        long = 0;
+    }
 
 
        const sqlInsertHistorial = `
-           INSERT INTO envios_historial (didEnvio, estado, quien, fecha, didCadete,latitud,logitud) 
+           INSERT INTO envios_historial (didEnvio, estado, quien, fecha, didCadete,latitud,longitud) 
            VALUES (?, ?, ?, ?, ?,?,?)
        `;
 
 
-       await executeQuery(dbConnection, sqlInsertHistorial, [didenvio, estado, quien, fechaT, didCadete,latitud,longitud]);
+       await executeQuery(dbConnection, sqlInsertHistorial, [didenvio, estado, quien, fechaT, didCadete,lat,long]);
    }
 
 
 
 } catch (error) {
-    logRed(`Error en updateLastShipmentState: ${error.stack}`);
+    console.log(`Error en updateLastShipmentState: ${error.stack}`);
     throw error;
 } finally { 
     if (dbConnection){
