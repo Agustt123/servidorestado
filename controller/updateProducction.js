@@ -1,7 +1,7 @@
 const { getConnection, executeQuery } = require("../dbconfig");
 
 const updateProducction = async (jsonData) => {
-    const { didempresa, didenvio, estado, subestado, estadoML, fecha, quien } = jsonData;
+    const { didempresa, didenvio, estado, subestado, estadoML, fecha, quien,latitud,longitud } = jsonData;
     let dbConnection;
     //console.log(dbConnection,"sdadasdsadssadsad");
     
@@ -51,10 +51,10 @@ const updateProducction = async (jsonData) => {
 
 
        const sqlInsertHistorial = `
-           INSERT INTO envios_historial (didEnvio, estado, quien, fecha, didCadete) 
+           INSERT INTO envios_historial (didEnvio, estado, quien, fecha, didCadete,latitud,logitud) 
            VALUES (?, ?, ?, ?, ?)
        `;
-       await executeQuery(dbConnection, sqlInsertHistorial, [didenvio, estado, quien, fechaT, didCadete]);
+       await executeQuery(dbConnection, sqlInsertHistorial, [didenvio, estado, quien, fechaT, didCadete,latitud,longitud]);
    }
 
 
