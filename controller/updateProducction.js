@@ -53,7 +53,7 @@ const updateProducction = async (jsonData) => {
    else{
     let lat = latitud
     let long= longitud
-    if(lat == undefined || long == undefined){
+    if(lat == undefined || long == undefined || lat == null || long == null){
         lat = 0;
         long = 0;
     }
