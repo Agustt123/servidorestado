@@ -10,12 +10,12 @@ const QUEUE_NAME = 'srvshipmltosrvstates';
 
 
 const newDbConfig = {
- host: '149.56.182.49',
- //host: 'localhost',
+ //host: '149.56.182.49',
+ host: 'localhost',
   user: 'userdata2',
   password: 'pt78pt79',
   database: 'dataestaos',
- port: 44337
+ //port: 44337
 };
 
 // Crear un pool de conexiones
