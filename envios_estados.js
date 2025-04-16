@@ -4,18 +4,18 @@ const { redisClient, getConnection, updateEstadoRedis } = require('./dbconfig');
 const mysql = require('mysql2/promise'); // Usar mysql2 con promesas
 const moment = require('moment'); 
 const { updateProducction } = require('./controller/updateProducction');
-
+const cors = require('cors');
 const RABBITMQ_URL = 'amqp://lightdata:QQyfVBKRbw6fBb@158.69.131.226:5672';
 const QUEUE_NAME = 'srvshipmltosrvstates';
 
 
 const newDbConfig = {
- //host: '149.56.182.49',
- host: 'localhost',
+ host: '149.56.182.49',
+ //host: 'localhost',
   user: 'userdata2',
   password: 'pt78pt79',
   database: 'dataestaos',
- //port: 44337
+ port: 44337
 };
 
 // Crear un pool de conexiones
@@ -178,7 +178,7 @@ try {
         superado INT,
         elim INT,
         latitud DOUBLE,
-     longitud DOUBLE,
+        longitud DOUBLE,
         INDEX(didEnvio),
         INDEX(operador),
         INDEX(fecha),
@@ -188,7 +188,7 @@ try {
         INDEX(estadoML),
         INDEX(subestadoML)
       )`);
-
+      
       await pool.query(`
         INSERT INTO ${tableName} (didEnvio, operador, estado, estadoML, subestadoML, fecha, quien, superado, elim,latitud,longitud)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -198,17 +198,28 @@ try {
   } catch (error) {
     console.error('Error en checkAndInsertData:', error);
   } finally {
- 
+    
       dbConnection.end(); // Asegúrate de cerrar la conexión a la base de datos actual
     
   }
 };
 
 
-app.get('/', (req, res) => {
+app.use(cors());
+
+app.get('/ping', (req, res) => {
+  const currentDate = new Date();
+  currentDate.setHours(currentDate.getHours()); // Resta 3 horas
+
+  // Formatear la hora en el formato HH:MM:SS
+  const hours = currentDate.getHours().toString().padStart(2, '0');
+  const minutes = currentDate.getMinutes().toString().padStart(2, '0');
+  const seconds = currentDate.getSeconds().toString().padStart(2, '0');
+
+  const formattedTime = `${hours}:${minutes}:${seconds}`;
+
   res.status(200).json({
-    estado: true,
-    mensaje: "Hola chris"
+    hora: formattedTime
   });
 });
 
