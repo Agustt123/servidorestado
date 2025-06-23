@@ -33,7 +33,7 @@ const updateProducction = async (jsonData) => {
     await executeQuery(dbConnection, sqlActualizarEnvios, [estado, didenvio]);
 
     const sqlDidCadete = `
-        SELECT quien 
+        SELECT operador 
         FROM envios_asignaciones 
         WHERE didEnvio = ? AND superado = 0 AND elim = 0
     `;
@@ -41,7 +41,7 @@ const updateProducction = async (jsonData) => {
       didenvio,
     ]);
 
-    const didCadete = cadeteResults.length > 0 ? cadeteResults[0].quien : 0;
+    const didCadete = cadeteResults.length > 0 ? cadeteResults[0].operador : 0;
     const now = new Date(
       new Date().toLocaleString("en-US", {
         timeZone: "America/Argentina/Buenos_Aires",
