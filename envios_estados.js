@@ -2,7 +2,7 @@ const amqp = require('amqplib');
 const express = require('express');
 const { redisClient, getConnection, updateEstadoRedis } = require('./dbconfig');
 const mysql = require('mysql2/promise'); // Usar mysql2 con promesas
-const moment = require('moment'); 
+const moment = require('moment');
 const { updateProducction } = require('./controller/updateProducction');
 const cors = require('cors');
 const RABBITMQ_URL = 'amqp://lightdata:QQyfVBKRbw6fBb@158.69.131.226:5672';
@@ -10,12 +10,12 @@ const QUEUE_NAME = 'srvshipmltosrvstates';
 
 
 const newDbConfig = {
- //host: '149.56.182.49',
- host: 'localhost',
+  //host: '149.56.182.49',
+  host: 'localhost',
   user: 'userdata2',
   password: 'pt78pt79',
   database: 'dataestaos',
- //port: 44337
+  //port: 44337
 };
 
 // Crear un pool de conexiones
@@ -27,95 +27,113 @@ const pool = mysql.createPool({
 const app = express();
 
 // Función para escuchar los mensajes de la cola
+function logConsola(mensaje, tipo = 'info') {
+  const timestamp = new Date().toISOString();
+  const colores = {
+    info: '\x1b[36m%s\x1b[0m',    // Cyan
+    ok: '\x1b[32m%s\x1b[0m',      // Green
+    warn: '\x1b[33m%s\x1b[0m',    // Yellow
+    error: '\x1b[31m%s\x1b[0m'    // Red
+  };
+  console.log(colores[tipo] || '%s', `[${timestamp}] ${mensaje}`);
+}
+
 const listenToQueue2 = async () => {
-  
   let connection;
   let channel;
-  
+
+  /*************  ✨ Windsurf Command ⭐  *************/
+  /**
+   * Establishes a connection to RabbitMQ server and listens to a specified queue.
+   * 
+   * This function attempts to connect to RabbitMQ using the provided URL and queue name. 
+   * If successful, it creates a channel, asserts the queue, and sets a prefetch limit. 
+   * It also consumes messages from the queue, processes them, and acknowledges them. 
+   * If any error occurs during connection or message processing, it logs the error 
+   * and retries connection after a delay. Additionally, it logs and retries upon 
+   * connection closure.
+   */
+
+  /*******  fb8688df-e659-4b9d-b862-ac2bb06a0fc9  *******/
   const connect = async () => {
     try {
+      logConsola('Intentando conectar a RabbitMQ...', 'info');
       connection = await amqp.connect(RABBITMQ_URL);
+
       channel = await connection.createChannel();
       await channel.assertQueue(QUEUE_NAME, { durable: true });
 
-      // Configurar el prefetch para procesar hasta 25 mensajes
       await channel.prefetch(20000);
-   console.log(`Esperando mensajes en la cola ${QUEUE_NAME}...`);
+      logConsola(`✅ Conectado a RabbitMQ y escuchando la cola "${QUEUE_NAME}"`, 'ok');
+      logConsola(`Esperando mensajes en la cola ${QUEUE_NAME}...`, 'info');
 
       channel.consume(QUEUE_NAME, async (msg) => {
         if (msg !== null) {
           const jsonData = JSON.parse(msg.content.toString());
-       //  console.log('Datos recibidos:', jsonData);
-          
+          logConsola(`📩 Mensaje recibido`, 'info');
+
           try {
-           await checkAndInsertData(jsonData);
-            //   await updateEstadoRedis(jsonData.didempresa,jsonData.didenvio,jsonData.estado)
-          //     console.log("pase");
-               
-            
-           if(jsonData.operacion)
-             {
-              console.log("pase operacion");
-             
-                 await updateProducction(jsonData);
-                
-                
-              }
-             // console.log('Mensaje procesado.');
-            
-            //console.log("holaaa");
-            channel.ack(msg); // No confirmar el mensaje si hubo un error
+            await checkAndInsertData(jsonData);
+
+            if (jsonData.operacion) {
+              logConsola("⚙️  Procesando operación: " + jsonData.operacion, 'info');
+              await updateProducction(jsonData);
+            }
+
+            channel.ack(msg);
+            logConsola('✅ Mensaje procesado correctamente', 'ok');
           } catch (error) {
-            console.log(error.message);
-            
-           // console.error('Error procesando el mensaje:', error);
+            logConsola(`❌ Error procesando mensaje: ${error.message}`, 'error');
           }
         }
       });
 
       connection.on('error', (err) => {
-        //console.error('Error en la conexión de RabbitMQ:', err);
+        logConsola(`❌ Error en la conexión de RabbitMQ: ${err.message}`, 'error');
       });
 
       connection.on('close', () => {
-        //console.error('Conexión a RabbitMQ cerrada, intentando reconectar...');
-        setTimeout(connect, 5000); // Intentar reconectar cada 5 segundos
+        logConsola('⚠️  Conexión cerrada. Reintentando en 5s...', 'warn');
+        setTimeout(connect, 5000);
       });
+
     } catch (error) {
-      //console.error('Error conectando a RabbitMQ:', error);
-      setTimeout(connect, 5000); // Intentar reconectar cada 5 segundos
+      logConsola(`❌ Error conectando a RabbitMQ: ${error.message}`, 'error');
+      setTimeout(connect, 5000); // Reintento
     }
   };
 
-  await connect(); // Iniciar la conexión
+  await connect();
 };
+
+
 async function limpiarEnviosViejos() {
-    let DWRTE = await redisClient.get('DWRTE');
-    if (!DWRTE) return;
-    
-    DWRTE = JSON.parse(DWRTE);
-    const ahora = Date.now();
-    const limite = 14 * 24 * 60 * 60 * 1000; // 14 días en milisegundos
+  let DWRTE = await redisClient.get('DWRTE');
+  if (!DWRTE) return;
 
-    let cambios = false;
+  DWRTE = JSON.parse(DWRTE);
+  const ahora = Date.now();
+  const limite = 14 * 24 * 60 * 60 * 1000; // 14 días en milisegundos
 
-    for (const empresaKey in DWRTE) {
-        for (const envioKey in DWRTE[empresaKey]) {
-            if (DWRTE[empresaKey][envioKey].timestamp < ahora - limite) {
-                delete DWRTE[empresaKey][envioKey]; // Eliminamos el envío
-                cambios = true;
-            }
-        }
+  let cambios = false;
 
-        // Si la empresa ya no tiene envíos, eliminarla también
-        if (Object.keys(DWRTE[empresaKey]).length === 0) {
-            delete DWRTE[empresaKey];
-        }
+  for (const empresaKey in DWRTE) {
+    for (const envioKey in DWRTE[empresaKey]) {
+      if (DWRTE[empresaKey][envioKey].timestamp < ahora - limite) {
+        delete DWRTE[empresaKey][envioKey]; // Eliminamos el envío
+        cambios = true;
+      }
     }
 
-    if (cambios) {
-        await redisClient.set('DWRTE', JSON.stringify(DWRTE));
+    // Si la empresa ya no tiene envíos, eliminarla también
+    if (Object.keys(DWRTE[empresaKey]).length === 0) {
+      delete DWRTE[empresaKey];
     }
+  }
+
+  if (cambios) {
+    await redisClient.set('DWRTE', JSON.stringify(DWRTE));
+  }
 }
 
 
@@ -125,23 +143,23 @@ const checkAndInsertData = async (jsonData) => {
   const { didempresa, didenvio, estado, subestado, estadoML, fecha, quien } = jsonData;
   const superado = jsonData.superado || 0;
   const elim = jsonData.elim || 0;
-  const formattedFecha = moment(fecha).format('YYYY-MM-DD HH:mm:ss'); 
+  const formattedFecha = moment(fecha).format('YYYY-MM-DD HH:mm:ss');
   const tableName = `estados_${didempresa}`;
-  let latitud=jsonData.latitud || 0;
-  let longitud=jsonData.longitud || 0;
+  let latitud = jsonData.latitud || 0;
+  let longitud = jsonData.longitud || 0;
 
-let dbConnection
-try {
+  let dbConnection
+  try {
     dbConnection = await getConnection(didempresa);
     // Conexión a la base de datos actual para obtener el chofer asignado
     const getChoferAsignadoQuery = `SELECT choferAsignado FROM envios WHERE elim = 0 AND superado = 0 AND did = ?`;
-    
+
     const choferResults = await dbConnection.query(getChoferAsignadoQuery, [didenvio]);
     //console.log('Resultados de la consulta de chofer:', choferResults);
 
     // Asignar 0 si no se encuentran resultados
     const choferAsignado = (Array.isArray(choferResults) && choferResults.length > 0)
-      ? choferResults[0].choferAsignado 
+      ? choferResults[0].choferAsignado
       : 0;
 
     // Verificar si la tabla existe
@@ -154,14 +172,14 @@ try {
       if (existingResults.length > 0) {
         // Actualizar solo el campo superado
         await pool.query(`UPDATE ${tableName} SET superado = ? WHERE didEnvio = ?`, [1, didenvio]);
-      //  console.log(`Campo superado actualizado a 1 en la nueva base de datos: ${JSON.stringify(jsonData)}`);
-      } 
-      
+        //  console.log(`Campo superado actualizado a 1 en la nueva base de datos: ${JSON.stringify(jsonData)}`);
+      }
+
       // Insertar nuevo registro con los nuevos datos
       await pool.query(`
         INSERT INTO ${tableName} (didEnvio, operador, estado, estadoML, subestadoML, fecha, quien, superado, elim,latitud,longitud)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?,?,?)
-      `, [didenvio, choferAsignado, estado, estadoML, subestado, formattedFecha, quien, superado, elim,latitud,longitud]);
+      `, [didenvio, choferAsignado, estado, estadoML, subestado, formattedFecha, quien, superado, elim, latitud, longitud]);
       //console.log(`Nuevo registro insertado correctamente en la nueva base de datos: ${JSON.stringify(jsonData)}`);
     } else {
       // Crear tabla e insertar
@@ -188,19 +206,19 @@ try {
         INDEX(estadoML),
         INDEX(subestadoML)
       )`);
-      
+
       await pool.query(`
         INSERT INTO ${tableName} (didEnvio, operador, estado, estadoML, subestadoML, fecha, quien, superado, elim,latitud,longitud)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `, [didenvio, choferAsignado, estado, estadoML, subestado, formattedFecha, quien, superado, elim,latitud,longitud]);
+      `, [didenvio, choferAsignado, estado, estadoML, subestado, formattedFecha, quien, superado, elim, latitud, longitud]);
       //console.log(`Tabla creada y datos insertados correctamente en la nueva base de datos: ${JSON.stringify(jsonData)}`);
     }
   } catch (error) {
     console.error('Error en checkAndInsertData:', error);
   } finally {
-    
-      dbConnection.end(); // Asegúrate de cerrar la conexión a la base de datos actual
-    
+
+    dbConnection.end(); // Asegúrate de cerrar la conexión a la base de datos actual
+
   }
 };
 
