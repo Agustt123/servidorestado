@@ -240,6 +240,27 @@ app.get('/ping', (req, res) => {
     hora: formattedTime
   });
 });
+app.post('/api/estados', async (req, res) => {
+  const jsonData = req.body;
+
+  if (!jsonData || !jsonData.didenvio || !jsonData.didempresa) {
+    return res.status(400).json({ success: false, message: 'Faltan parámetros obligatorios (didempresa, didenvio)' });
+  }
+
+  try {
+    await checkAndInsertData(jsonData);
+
+    if (jsonData.operacion) {
+      await updateProducction(jsonData);
+    }
+
+    return res.status(200).json({ success: true, message: 'Estado procesado correctamente' });
+  } catch (error) {
+    console.error('❌ Error en endpoint /api/estados:', error);
+    return res.status(500).json({ success: false, message: 'Error interno al procesar el estado' });
+  }
+});
+
 
 const PORT = 13000;
 app.listen(PORT, () => {
