@@ -243,9 +243,7 @@ app.get('/ping', (req, res) => {
 app.post('/estados', async (req, res) => {
   const jsonData = req.body;
 
-  if (!jsonData || !jsonData.didenvio || !jsonData.didempresa) {
-    return res.status(400).json({ success: false, message: 'Faltan parámetros obligatorios (didempresa, didenvio)' });
-  }
+
 
   try {
     await checkAndInsertData(jsonData);
