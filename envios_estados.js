@@ -224,6 +224,7 @@ const checkAndInsertData = async (jsonData) => {
 
 
 app.use(cors());
+app.use(express.json());
 
 app.get('/ping', (req, res) => {
   const currentDate = new Date();
