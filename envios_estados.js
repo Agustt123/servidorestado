@@ -242,6 +242,8 @@ app.get('/ping', (req, res) => {
 });
 app.post('/estados', async (req, res) => {
   const jsonData = req.body;
+  console.log("JSON recibido:", jsonData);
+
 
 
 
