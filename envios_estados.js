@@ -240,7 +240,7 @@ app.get('/ping', (req, res) => {
     hora: formattedTime
   });
 });
-app.post('/api/estados', async (req, res) => {
+app.post('/estados', async (req, res) => {
   const jsonData = req.body;
 
   if (!jsonData || !jsonData.didenvio || !jsonData.didempresa) {
