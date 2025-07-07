@@ -18,55 +18,54 @@ redisClient.on('error', (err) => {
     //  console.log('Redis conectado');
 })();
 
-const mysql2 = require('mysql2');
-const pools = {}; // Cache de pools por empresa
-
 async function getConnection(idempresa) {
     try {
+        // console.log("idempresa recibido:", idempresa);
+
+        // Validación del tipo de idempresa
         if (typeof idempresa !== 'string' && typeof idempresa !== 'number') {
             throw new Error(`idempresa debe ser un string o un número, pero es: ${typeof idempresa}`);
         }
 
-        // Obtener empresas desde Redis
+        // Obtener las empresas desde Redis
         const redisKey = 'empresasData';
         const empresasData = await getFromRedis(redisKey);
         if (!empresasData) {
             throw new Error(`No se encontraron datos de empresas en Redis.`);
         }
 
+        // console.log("Datos obtenidos desde Redis:", empresasData);
+
+        // Buscar la empresa por su id
         const empresa = empresasData[String(idempresa)];
         if (!empresa) {
             throw new Error(`No se encontró la configuración de la empresa con ID: ${idempresa}`);
         }
 
-        // Si ya hay un pool para esa empresa, lo devolvemos
-        if (pools[idempresa]) {
-            return pools[idempresa].promise();
-        }
+        //   console.log("Configuración de la empresa encontrada:", empresa);
 
-        // Crear pool de conexiones
+        // Configurar la conexión a la base de datos
         const config = {
-            host: 'bhsmysql1.lightdata.com.ar',
-            database: empresa.dbname,
-            user: empresa.dbuser,
-            password: empresa.dbpass,
-            waitForConnections: true,
-            connectionLimit: 10,
-            queueLimit: 0
+            host: 'bhsmysql1.lightdata.com.ar',  // Host fijo
+            database: empresa.dbname,           // Base de datos desde Redis
+            user: empresa.dbuser,               // Usuario desde Redis
+            password: empresa.dbpass,           // Contraseña desde Redis
         };
 
-        const pool = mysql2.createPool(config);
-        pools[idempresa] = pool; // Cachear el pool
+        //console.log("Configuración de la conexión:", config);
 
-        return pool.promise();
+        return mysql.createConnection(config);
     } catch (error) {
         console.error(`Error al obtener la conexión:`, error.message);
 
+        // Lanza un error con una respuesta estándar
         throw {
             status: 500,
             response: {
                 estado: false,
+
                 error: -1,
+
             },
         };
     }
