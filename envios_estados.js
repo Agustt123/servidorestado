@@ -63,7 +63,7 @@ const listenToQueue2 = async () => {
       channel = await connection.createChannel();
       await channel.assertQueue(QUEUE_NAME, { durable: true });
 
-      await channel.prefetch(20000);
+      await channel.prefetch(500);
       logConsola(`✅ Conectado a RabbitMQ y escuchando la cola "${QUEUE_NAME}"`, 'ok');
       logConsola(`Esperando mensajes en la cola ${QUEUE_NAME}...`, 'info');
 
@@ -149,8 +149,8 @@ const checkAndInsertData = async (jsonData) => {
   let longitud = jsonData.longitud || 0;
 
   let dbConnection
+  dbConnection = await getConnection(didempresa);
   try {
-    dbConnection = await getConnection(didempresa);
     // Conexión a la base de datos actual para obtener el chofer asignado
     const getChoferAsignadoQuery = `SELECT choferAsignado FROM envios WHERE elim = 0 AND superado = 0 AND did = ?`;
 
