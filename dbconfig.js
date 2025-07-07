@@ -1,12 +1,13 @@
 const mysql = require('mysql');
 const redis = require('redis');
+const mysql = require('mysql2');
 
 const redisClient = redis.createClient({
     socket: {
-        host: '192.99.190.137', 
-        port: 50301,           
+        host: '192.99.190.137',
+        port: 50301,
     },
-    password: 'sdJmdxXC8luknTrqmHceJS48NTyzExQg', 
+    password: 'sdJmdxXC8luknTrqmHceJS48NTyzExQg',
 });
 
 redisClient.on('error', (err) => {
@@ -15,57 +16,57 @@ redisClient.on('error', (err) => {
 
 (async () => {
     await redisClient.connect();
-  //  console.log('Redis conectado');
+    //  console.log('Redis conectado');
 })();
+
+const pools = {}; // Cache de pools por empresa
 
 async function getConnection(idempresa) {
     try {
-       // console.log("idempresa recibido:", idempresa);
-
-        // Validación del tipo de idempresa
         if (typeof idempresa !== 'string' && typeof idempresa !== 'number') {
             throw new Error(`idempresa debe ser un string o un número, pero es: ${typeof idempresa}`);
         }
 
-        // Obtener las empresas desde Redis
+        // Obtener empresas desde Redis
         const redisKey = 'empresasData';
         const empresasData = await getFromRedis(redisKey);
         if (!empresasData) {
             throw new Error(`No se encontraron datos de empresas en Redis.`);
         }
 
-       // console.log("Datos obtenidos desde Redis:", empresasData);
-
-        // Buscar la empresa por su id
         const empresa = empresasData[String(idempresa)];
         if (!empresa) {
             throw new Error(`No se encontró la configuración de la empresa con ID: ${idempresa}`);
         }
 
-     //   console.log("Configuración de la empresa encontrada:", empresa);
+        // Si ya hay un pool para esa empresa, lo devolvemos
+        if (pools[idempresa]) {
+            return pools[idempresa].promise();
+        }
 
-        // Configurar la conexión a la base de datos
+        // Crear pool de conexiones
         const config = {
-            host: 'bhsmysql1.lightdata.com.ar',  // Host fijo
-            database: empresa.dbname,           // Base de datos desde Redis
-            user: empresa.dbuser,               // Usuario desde Redis
-            password: empresa.dbpass,           // Contraseña desde Redis
+            host: 'bhsmysql1.lightdata.com.ar',
+            database: empresa.dbname,
+            user: empresa.dbuser,
+            password: empresa.dbpass,
+            waitForConnections: true,
+            connectionLimit: 10,
+            queueLimit: 0
         };
 
-        //console.log("Configuración de la conexión:", config);
+        const pool = mysql.createPool(config);
+        pools[idempresa] = pool; // Cachear el pool
 
-        return mysql.createConnection(config);
+        return pool.promise();
     } catch (error) {
         console.error(`Error al obtener la conexión:`, error.message);
 
-        // Lanza un error con una respuesta estándar
         throw {
             status: 500,
             response: {
                 estado: false,
-              
                 error: -1,
-             
             },
         };
     }
@@ -82,14 +83,14 @@ async function getFromRedis(key) {
             status: 500,
             response: {
                 estado: false,
-              
+
                 error: -1
-              
+
             },
         };
     }
 }
- async function updateEstadoRedis(empresaId, envioId, estado) {
+async function updateEstadoRedis(empresaId, envioId, estado) {
     let DWRTE = await redisClient.get('DWRTE');
     DWRTE = DWRTE ? JSON.parse(DWRTE) : {};
 
@@ -110,7 +111,7 @@ async function getFromRedis(key) {
 
     await redisClient.set('DWRTE', JSON.stringify(DWRTE));
 }
- async function executeQuery(connection, query, values, log = false) {
+async function executeQuery(connection, query, values, log = false) {
     if (log) {
         logYellow(`Ejecutando query: ${query} con valores: ${values}`);
     }
@@ -138,4 +139,4 @@ async function getFromRedis(key) {
 
 
 
-module.exports = { getConnection, getFromRedis, redisClient ,updateEstadoRedis,executeQuery};
+module.exports = { getConnection, getFromRedis, redisClient, updateEstadoRedis, executeQuery };
