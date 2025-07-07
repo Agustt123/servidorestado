@@ -139,7 +139,7 @@ async function limpiarEnviosViejos() {
 
 
 // Función para insertar los datos en la nueva base de datos
-const checkAndInsertData = async (jsonData) => {
+const checkAndInsertData = async (jsonData, intento = 1) => {
   const { didempresa, didenvio, estado, subestado, estadoML, fecha, quien } = jsonData;
   const superado = jsonData.superado || 0;
   const elim = jsonData.elim || 0;
@@ -148,41 +148,32 @@ const checkAndInsertData = async (jsonData) => {
   let latitud = jsonData.latitud || 0;
   let longitud = jsonData.longitud || 0;
 
-  let dbConnection
-  dbConnection = await getConnection(didempresa);
+  let dbConnection;
+
   try {
-    // Conexión a la base de datos actual para obtener el chofer asignado
+    dbConnection = await getConnection(didempresa);
+
     const getChoferAsignadoQuery = `SELECT choferAsignado FROM envios WHERE elim = 0 AND superado = 0 AND did = ?`;
-
     const choferResults = await dbConnection.query(getChoferAsignadoQuery, [didenvio]);
-    //console.log('Resultados de la consulta de chofer:', choferResults);
-
-    // Asignar 0 si no se encuentran resultados
     const choferAsignado = (Array.isArray(choferResults) && choferResults.length > 0)
       ? choferResults[0].choferAsignado
       : 0;
 
-    // Verificar si la tabla existe
     const [results] = await pool.query(`SHOW TABLES LIKE ?`, [tableName]);
 
     if (results.length > 0) {
-      // Verificar si el didEnvio ya existe
       const [existingResults] = await pool.query(`SELECT * FROM ${tableName} WHERE didEnvio = ?`, [didenvio]);
 
       if (existingResults.length > 0) {
-        // Actualizar solo el campo superado
         await pool.query(`UPDATE ${tableName} SET superado = ? WHERE didEnvio = ?`, [1, didenvio]);
-        //  console.log(`Campo superado actualizado a 1 en la nueva base de datos: ${JSON.stringify(jsonData)}`);
       }
 
-      // Insertar nuevo registro con los nuevos datos
       await pool.query(`
-        INSERT INTO ${tableName} (didEnvio, operador, estado, estadoML, subestadoML, fecha, quien, superado, elim,latitud,longitud)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?,?,?)
+        INSERT INTO ${tableName} (didEnvio, operador, estado, estadoML, subestadoML, fecha, quien, superado, elim, latitud, longitud)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `, [didenvio, choferAsignado, estado, estadoML, subestado, formattedFecha, quien, superado, elim, latitud, longitud]);
-      //console.log(`Nuevo registro insertado correctamente en la nueva base de datos: ${JSON.stringify(jsonData)}`);
+
     } else {
-      // Crear tabla e insertar
       await pool.query(`CREATE TABLE ${tableName} (
         id INT AUTO_INCREMENT PRIMARY KEY,
         didEnvio VARCHAR(255),
@@ -208,19 +199,31 @@ const checkAndInsertData = async (jsonData) => {
       )`);
 
       await pool.query(`
-        INSERT INTO ${tableName} (didEnvio, operador, estado, estadoML, subestadoML, fecha, quien, superado, elim,latitud,longitud)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO ${tableName} (didEnvio, operador, estado, estadoML, subestadoML, fecha, quien, superado, elim, latitud, longitud)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `, [didenvio, choferAsignado, estado, estadoML, subestado, formattedFecha, quien, superado, elim, latitud, longitud]);
-      //console.log(`Tabla creada y datos insertados correctamente en la nueva base de datos: ${JSON.stringify(jsonData)}`);
     }
+
   } catch (error) {
-    console.error('Error en checkAndInsertData:', error);
+    console.error(`Error en checkAndInsertData (intento ${intento}):`, error);
+
+    // Reintentar hasta 3 veces si hay error
+    if (intento < 3) {
+      console.log(`🔁 Reintentando checkAndInsertData (intento ${intento + 1})...`);
+      await new Promise(res => setTimeout(res, 300)); // pequeño delay
+      return checkAndInsertData(jsonData, intento + 1);
+    }
+
+    // Si ya reintentó 3 veces, lanzar el error o registrarlo
+    console.error(`❌ Falló definitivamente después de 3 intentos: didenvio ${didenvio}`);
+
   } finally {
-
-    dbConnection.end(); // Asegúrate de cerrar la conexión a la base de datos actual
-
+    if (dbConnection && dbConnection.end) {
+      dbConnection.end(); // solo si existe
+    }
   }
 };
+
 
 
 app.use(cors());
