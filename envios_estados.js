@@ -7,7 +7,7 @@ const { updateProducction } = require('./controller/updateProducction');
 const cors = require('cors');
 const RABBITMQ_URL = 'amqp://lightdata:QQyfVBKRbw6fBb@158.69.131.226:5672';
 const QUEUE_NAME = 'srvshipmltosrvstates';
-const crypto = require('crypto');
+
 
 // Función que genera el hash SHA-256 de la fecha actual
 function generarTokenFechaHoy() {
