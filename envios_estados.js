@@ -7,6 +7,19 @@ const { updateProducction } = require('./controller/updateProducction');
 const cors = require('cors');
 const RABBITMQ_URL = 'amqp://lightdata:QQyfVBKRbw6fBb@158.69.131.226:5672';
 const QUEUE_NAME = 'srvshipmltosrvstates';
+const crypto = require('crypto');
+
+// Función que genera el hash SHA-256 de la fecha actual
+function generarTokenFechaHoy() {
+  const fecha = new Date();
+  const dia = String(fecha.getDate()).padStart(2, '0');
+  const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+  const anio = fecha.getFullYear();
+  const fechaString = `${dia}${mes}${anio}`; // Ej: "11072025"
+
+  const hash = crypto.createHash('sha256').update(fechaString).digest('hex');
+  return hash;
+}
 
 
 const newDbConfig = {
@@ -244,12 +257,31 @@ app.get('/ping', (req, res) => {
     hora: formattedTime
   });
 });
+const crypto = require('crypto');
+
+// Función que genera el hash SHA-256 de la fecha actual
+function generarTokenFechaHoy() {
+  const fecha = new Date();
+  const dia = String(fecha.getDate()).padStart(2, '0');
+  const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+  const anio = fecha.getFullYear();
+  const fechaString = `${dia}${mes}${anio}`; // Ej: "11072025"
+
+  const hash = crypto.createHash('sha256').update(fechaString).digest('hex');
+  return hash;
+}
+
 app.post('/estados', async (req, res) => {
   const jsonData = req.body;
   console.log("JSON recibido:", jsonData);
 
+  // Validar token
+  const tokenEsperado = generarTokenFechaHoy();
 
-
+  if (jsonData.tkn !== tokenEsperado) {
+    console.warn("⚠️ Token inválido:", jsonData.tkn);
+    return res.status(401).json({ success: false, message: 'Token inválido' });
+  }
 
   try {
     await checkAndInsertData(jsonData);
