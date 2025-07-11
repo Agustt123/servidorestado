@@ -10,18 +10,7 @@ const QUEUE_NAME = 'srvshipmltosrvstates';
 
 
 // Función que genera el hash SHA-256 de la fecha actual
-function generarTokenFechaHoy() {
-  const fecha = new Date();
-  console.log("Fecha actualaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa:", fecha);
 
-  const dia = String(fecha.getDate()).padStart(2, '0');
-  const mes = String(fecha.getMonth() + 1).padStart(2, '0');
-  const anio = fecha.getFullYear();
-  const fechaString = `${dia}${mes}${anio}`; // Ej: "11072025"
-
-  const hash = crypto.createHash('sha256').update(fechaString).digest('hex');
-  return hash;
-}
 
 
 const newDbConfig = {
@@ -263,14 +252,18 @@ const crypto = require('crypto');
 
 // Función que genera el hash SHA-256 de la fecha actual
 function generarTokenFechaHoy() {
-  const fecha = new Date();
-  console.log("Fecha actualaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa:", fecha);
-  const dia = String(fecha.getDate()).padStart(2, '0');
-  const mes = String(fecha.getMonth() + 1).padStart(2, '0');
-  const anio = fecha.getFullYear();
-  const fechaString = `${dia}${mes}${anio}`; // Ej: "11072025"
+  const ahora = new Date();
+  ahora.setHours(ahora.getHours() - 3); // Resta 3 horas
 
+  console.log("📆 Fecha ajustada (UTC-3):", ahora);
+
+  const dia = String(ahora.getDate()).padStart(2, '0');
+  const mes = String(ahora.getMonth() + 1).padStart(2, '0');
+  const anio = ahora.getFullYear();
+
+  const fechaString = `${dia}${mes}${anio}`; // Ej: "11072025"
   const hash = crypto.createHash('sha256').update(fechaString).digest('hex');
+
   return hash;
 }
 
