@@ -264,6 +264,7 @@ const crypto = require('crypto');
 // Función que genera el hash SHA-256 de la fecha actual
 function generarTokenFechaHoy() {
   const fecha = new Date();
+  console.log("Fecha actualaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa:", fecha);
   const dia = String(fecha.getDate()).padStart(2, '0');
   const mes = String(fecha.getMonth() + 1).padStart(2, '0');
   const anio = fecha.getFullYear();
