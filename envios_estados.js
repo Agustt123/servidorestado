@@ -273,6 +273,8 @@ app.post('/estados', async (req, res) => {
 
   // Validar token
   const tokenEsperado = generarTokenFechaHoy();
+  console.log("Token esperado:", tokenEsperado);
+
 
   if (jsonData.tkn !== tokenEsperado) {
     console.warn("⚠️ Token inválido:", jsonData.tkn);
@@ -280,7 +282,7 @@ app.post('/estados', async (req, res) => {
   }
 
   try {
-    await checkAndInsertData(jsonData);
+    //await checkAndInsertData(jsonData);
 
     if (jsonData.operacion) {
       await updateProducction(jsonData);

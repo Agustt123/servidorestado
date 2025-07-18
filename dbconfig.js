@@ -124,7 +124,8 @@ async function executeQuery(connection, query, values, log = false) {
                     reject(err);
                 } else {
                     if (log) {
-                        logYellow(`Query ejecutado con éxito: ${JSON.stringify(results)}`);
+                        console.log(`Resultado de la consulta: ${JSON.stringify(results)}`);
+
                     }
                     resolve(results);
                 }

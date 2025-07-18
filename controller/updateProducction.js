@@ -58,7 +58,7 @@ const updateProducction = async (jsonData) => {
     `;
       await executeQuery(dbConnection, sqlInsertHistorial, [
         didenvio,
-        estado ? estado : 0,
+        estado,
         quien,
         fechaT,
         didCadete,
@@ -85,13 +85,15 @@ const updateProducction = async (jsonData) => {
 
       await executeQuery(dbConnection, sqlInsertHistorial, [
         didenvio,
-        estado ? estado : 0,
+        estado,
         quien,
         fechaT,
         didCadete,
         lat,
         long,
       ]);
+      console.log(estado);
+
     }
   } catch (error) {
     console.log(`Error en updateLastShipmentState: ${error.stack}`);
