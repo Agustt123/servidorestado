@@ -75,7 +75,7 @@ const listenToQueue2 = async () => {
         if (msg !== null) {
           const jsonData = JSON.parse(msg.content.toString());
           logConsola(`📩 Mensaje recibido`, 'info');
-          channel.ack(msg);
+          //   channel.ack(msg);
 
           try {
             await checkAndInsertData(jsonData);
@@ -85,7 +85,7 @@ const listenToQueue2 = async () => {
               await updateProducction(jsonData);
             }
 
-            //   channel.ack(msg);
+            channel.ack(msg);
             logConsola('✅ Mensaje procesado correctamente', 'ok');
           } catch (error) {
             logConsola(`❌ Error procesando mensaje: ${error.message}`, 'error');
