@@ -75,7 +75,7 @@ const listenToQueue2 = async () => {
         if (msg !== null) {
           const jsonData = JSON.parse(msg.content.toString());
           logConsola(`📩 Mensaje recibido`, 'info');
-          //   channel.ack(msg);
+          channel.ack(msg);
 
           try {
             await checkAndInsertData(jsonData);
@@ -85,7 +85,7 @@ const listenToQueue2 = async () => {
               await updateProducction(jsonData);
             }
 
-            channel.ack(msg);
+            // channel.ack(msg);
             logConsola('✅ Mensaje procesado correctamente', 'ok');
           } catch (error) {
             logConsola(`❌ Error procesando mensaje: ${error.message}`, 'error');
@@ -286,10 +286,12 @@ app.post('/estados', async (req, res) => {
     //await checkAndInsertData(jsonData);
 
     if (jsonData.operacion) {
-      await updateProducction(jsonData);
+      const resultado = await updateProducction(jsonData);
+
+      return res.status(200).json({ success: true, message: 'Estado procesado correctamente', id: resultado });
     }
 
-    return res.status(200).json({ success: true, message: 'Estado procesado correctamente' });
+    return res.status(200).json({ success: true, message: 'Estado procesado correctamente', id: resultado });
   } catch (error) {
     console.error('❌ Error en endpoint /api/estados:', error);
     return res.status(500).json({ success: false, message: 'Error interno al procesar el estado' });

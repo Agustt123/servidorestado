@@ -83,7 +83,7 @@ const updateProducction = async (jsonData) => {
            VALUES (?, ?, ?, ?, ?,?,?)
        `;
 
-      await executeQuery(dbConnection, sqlInsertHistorial, [
+      const resultado = await executeQuery(dbConnection, sqlInsertHistorial, [
         didenvio,
         estado,
         quien,
@@ -93,6 +93,7 @@ const updateProducction = async (jsonData) => {
         long,
       ]);
       console.log(estado);
+      return resultado.insertId;
 
     }
   } catch (error) {
