@@ -3,7 +3,7 @@ const express = require('express');
 const { redisClient, getConnection, updateEstadoRedis } = require('./dbconfig');
 const mysql = require('mysql2/promise'); // Usar mysql2 con promesas
 const moment = require('moment');
-const { updateProducction } = require('./controller/updateProducction');
+const { updateProducction, procesarEstadoIndividual } = require('./controller/updateProducction');
 const cors = require('cors');
 const RABBITMQ_URL = 'amqp://lightdata:QQyfVBKRbw6fBb@158.69.131.226:5672';
 const QUEUE_NAME = 'srvshipmltosrvstates';
@@ -297,7 +297,75 @@ app.post('/estados', async (req, res) => {
     return res.status(500).json({ success: false, message: 'Error interno al procesar el estado' });
   }
 });
+app.post('/estados/lote', async (req, res) => {
+  const {
+    didempresa,
+    estado,
+    subestado = null,
+    estadoML = null,
+    fecha = null,
+    quien,
+    latitud = 0,
+    longitud = 0,
+    operacion = "operador", // "ml" u otro
+    didenvios,
+  } = req.body || {};
 
+  // Validaciones mínimas
+  if (!didempresa) {
+    return res.status(400).json({ success: false, message: 'Falta didempresa' });
+  }
+  if (!estado) {
+    return res.status(400).json({ success: false, message: 'Falta estado' });
+  }
+  if (!Array.isArray(didenvios) || didenvios.length === 0) {
+    return res.status(400).json({ success: false, message: 'didenvios debe ser un array con al menos un id' });
+  }
+
+  let dbConnection;
+  const resultados = [];
+  const fallidos = [];
+
+  try {
+    dbConnection = await getConnection(didempresa);
+
+    // Procesa cada didEnvio de forma independiente
+    for (const didenvio of didenvios) {
+      try {
+        const insertId = await procesarEstadoIndividual({
+          dbConnection,
+          didenvio,
+          estado,
+          subestado,
+          estadoML,
+          fecha,
+          quien,
+          latitud,
+          longitud,
+          operacion,
+        });
+        resultados.push({ didenvio, insertId });
+      } catch (err) {
+        console.error(`Error procesando didenvio ${didenvio}:`, err?.message || err);
+        fallidos.push({ didenvio, error: err?.message || 'Error desconocido' });
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Lote procesado',
+      procesados: resultados.length,
+      fallidos: fallidos.length,
+      resultados,
+      errores: fallidos,
+    });
+  } catch (error) {
+    console.error('❌ Error general en /estados/lote:', error);
+    return res.status(500).json({ success: false, message: 'Error interno en lote' });
+  } finally {
+    if (dbConnection) dbConnection.end();
+  }
+});
 
 const PORT = 13000;
 app.listen(PORT, () => {
