@@ -11,6 +11,7 @@ const updateProducction = async (jsonData) => {
     quien,
     latitud,
     longitud,
+    desde = "",
   } = jsonData;
   let dbConnection;
   console.log(jsonData, "jsonData");
@@ -52,8 +53,8 @@ const updateProducction = async (jsonData) => {
 
     if (jsonData.operacion == "ml") {
       const sqlInsertHistorial = `
-        INSERT INTO envios_historial (didEnvio, estado, quien, fecha, didCadete,estadoML, subEstadoML)
-        VALUES (?, ?, ?, ?, ?, ?, ?) 
+        INSERT INTO envios_historial (didEnvio, estado, quien, fecha, didCadete,estadoML, subEstadoML,desde)
+        VALUES (?, ?, ?, ?, ?, ?, ?,?) 
   
     `;
       await executeQuery(dbConnection, sqlInsertHistorial, [
@@ -64,6 +65,7 @@ const updateProducction = async (jsonData) => {
         didCadete,
         estadoML,
         subestado,
+        desde
       ]);
     } else {
       let lat = latitud;
@@ -116,6 +118,7 @@ async function procesarEstadoIndividual({
   latitud,
   longitud,
   operacion,
+
 }) {
   // 1) Marcar historiales previos como superados
   const sqlSuperado = `
