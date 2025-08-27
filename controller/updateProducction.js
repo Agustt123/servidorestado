@@ -11,7 +11,7 @@ const updateProducction = async (jsonData) => {
     quien,
     latitud,
     longitud,
-    desde,
+    desde = "",
   } = jsonData;
   let dbConnection;
   console.log(jsonData, "jsonData");
@@ -81,8 +81,8 @@ const updateProducction = async (jsonData) => {
       }
 
       const sqlInsertHistorial = `
-           INSERT INTO envios_historial (didEnvio, estado, quien, fecha, didCadete,latitud,longitud,desde) 
-           VALUES (?, ?, ?, ?, ?,?,?,?)
+           INSERT INTO envios_historial (didEnvio, estado, quien, fecha, didCadete,latitud,longitud) 
+           VALUES (?, ?, ?, ?, ?,?,?)
        `;
 
       const resultado = await executeQuery(dbConnection, sqlInsertHistorial, [
@@ -93,7 +93,6 @@ const updateProducction = async (jsonData) => {
         didCadete,
         lat,
         long,
-        desde
       ]);
       console.log(estado);
       return resultado.insertId;
