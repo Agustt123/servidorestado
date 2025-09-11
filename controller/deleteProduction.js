@@ -14,10 +14,7 @@ const deleteProduction = async (data) => {
       SET elim = 7
       WHERE didEnvio = ? AND id = ?
     `;
-        const result = await executeQuery(dbConnection, sqlEliminar, [didEnvio, didHistorial]);
-        if (result.affectedRows === 0) {
-            throw new Error(`No se encontró el historial con id ${didHistorial} para el envío ${didEnvio}`);
-        }
+        await executeQuery(dbConnection, sqlEliminar, [didEnvio, didHistorial]);
 
         // 2) Marcar TODOS los no eliminados como superados (1)
         //    (no tocamos los que tienen elim!=0; así el eliminado puede quedar con superado=0, como tu ejemplo)
