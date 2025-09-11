@@ -46,19 +46,7 @@ const listenToQueue2 = async () => {
   let connection;
   let channel;
 
-  /*************  ✨ Windsurf Command ⭐  *************/
-  /**
-   * Establishes a connection to RabbitMQ server and listens to a specified queue.
-   * 
-   * This function attempts to connect to RabbitMQ using the provided URL and queue name. 
-   * If successful, it creates a channel, asserts the queue, and sets a prefetch limit. 
-   * It also consumes messages from the queue, processes them, and acknowledges them. 
-   * If any error occurs during connection or message processing, it logs the error 
-   * and retries connection after a delay. Additionally, it logs and retries upon 
-   * connection closure.
-   */
 
-  /*******  fb8688df-e659-4b9d-b862-ac2bb06a0fc9  *******/
   const connect = async () => {
     try {
       logConsola('Intentando conectar a RabbitMQ...', 'info');
@@ -250,6 +238,8 @@ app.get('/ping', (req, res) => {
   });
 });
 const crypto = require('crypto');
+const { deleteProduction } = require('./controller/deleteProduction');
+
 
 // Función que genera el hash SHA-256 de la fecha actual
 function generarTokenFechaHoy() {
@@ -297,7 +287,10 @@ app.post('/estados', async (req, res) => {
     return res.status(500).json({ success: false, message: 'Error interno al procesar el estado' });
   }
 });
+
 app.post('/estados/lote', async (req, res) => {
+
+
   const {
     didempresa,
     estado,
@@ -366,6 +359,27 @@ app.post('/estados/lote', async (req, res) => {
     if (dbConnection) dbConnection.end();
   }
 });
+app.post('/estados/eliminar', async (req, res) => {
+  const data = req.body;
+
+
+  try {
+
+
+
+    const resultado = await deleteProduction(data);
+
+
+    return res.status(200).json(resultado);
+
+
+
+  } catch (error) {
+    console.error('❌ Error en endpoint /api/estados/elimianr:', error);
+    return res.status(500).json({ success: false, message: 'Error interno al procesar el estado' });
+  }
+});
+
 
 const PORT = 13000;
 app.listen(PORT, () => {

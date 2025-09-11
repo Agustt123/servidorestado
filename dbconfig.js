@@ -112,7 +112,7 @@ async function updateEstadoRedis(empresaId, envioId, estado) {
 }
 async function executeQuery(connection, query, values, log = false) {
     if (log) {
-        logYellow(`Ejecutando query: ${query} con valores: ${values}`);
+        console.log(`Ejecutando query: ${query} con valores: ${values}`);
     }
     try {
         return new Promise((resolve, reject) => {
