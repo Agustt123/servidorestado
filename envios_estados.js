@@ -235,7 +235,7 @@ app.get('/test', (req, res) => {
 
   res.status(200).json({
     hora: formattedTime,
-    mensaje. "hola denu"
+    mensaje: "hola denu"
   });
 });
 const crypto = require('crypto');
@@ -396,4 +396,5 @@ limpiarEnviosViejos();
 
 
 module.exports = { listenToQueue2 };
+
 
