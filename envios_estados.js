@@ -222,7 +222,7 @@ const checkAndInsertData = async (jsonData, intento = 1) => {
 app.use(cors());
 app.use(express.json());
 
-app.get('/ping', (req, res) => {
+app.get('/test', (req, res) => {
   const currentDate = new Date();
   currentDate.setHours(currentDate.getHours()); // Resta 3 horas
 
@@ -234,7 +234,8 @@ app.get('/ping', (req, res) => {
   const formattedTime = `${hours}:${minutes}:${seconds}`;
 
   res.status(200).json({
-    hora: formattedTime
+    hora: formattedTime,
+    mensaje. "hola denu"
   });
 });
 const crypto = require('crypto');
@@ -395,3 +396,4 @@ limpiarEnviosViejos();
 
 
 module.exports = { listenToQueue2 };
+
