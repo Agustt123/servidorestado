@@ -2,7 +2,7 @@ const { executeQuery } = require("../dbconfig.js");
 
 
 
-async function crearLog(empresa, usuario, perfil, body, tiempo, resultado, endpoint, exito, db) {
+async function crearLog(empresa, usuario, perfil, body, tiempo, resultado, exito, db) {
     try {
 
         // Enmascarados según endpoint
