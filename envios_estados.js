@@ -166,6 +166,9 @@ const checkAndInsertData = async (jsonData, intento = 1) => {
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `, [didenvio, choferAsignado, estado, estadoML, subestado, formattedFecha, quien, superado, elim, latitud, longitud]);
 
+      //  crearLog(didempresa, quien, '', jsonData, '', "inserto", '/ESTADO', 1, dbConnection);
+
+
     } else {
       await pool.query(`CREATE TABLE ${tableName} (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -197,6 +200,10 @@ const checkAndInsertData = async (jsonData, intento = 1) => {
       `, [didenvio, choferAsignado, estado, estadoML, subestado, formattedFecha, quien, superado, elim, latitud, longitud]);
     }
 
+    crearLog(didempresa, quien, '', jsonData, '', "inserto", '/ESTADO', 1, dbConnection);
+
+
+
   } catch (error) {
     console.error(`Error en checkAndInsertData (intento ${intento}):`, error);
 
@@ -222,7 +229,7 @@ const checkAndInsertData = async (jsonData, intento = 1) => {
 app.use(cors());
 app.use(express.json());
 
-app.get('/ping', (req, res) => {
+app.get('/test', (req, res) => {
   const currentDate = new Date();
   currentDate.setHours(currentDate.getHours()); // Resta 3 horas
 
@@ -234,11 +241,13 @@ app.get('/ping', (req, res) => {
   const formattedTime = `${hours}:${minutes}:${seconds}`;
 
   res.status(200).json({
-    hora: formattedTime
+    hora: formattedTime,
+    response: "hola barbie morocha"
   });
 });
 const crypto = require('crypto');
 const { deleteProduction } = require('./controller/deleteProduction');
+const { crearLog } = require('./funciones/crearLogs');
 
 
 // Función que genera el hash SHA-256 de la fecha actual
@@ -260,20 +269,20 @@ function generarTokenFechaHoy() {
 
 app.post('/estados', async (req, res) => {
   const jsonData = req.body;
-  console.log("JSON recibido:", jsonData);
+  // console.log("JSON recibido:", jsonData);
 
   // Validar token
   const tokenEsperado = generarTokenFechaHoy();
-  console.log("Token esperado:", tokenEsperado);
+  //console.log("Token esperado:", tokenEsperado);
 
 
   if (jsonData.tkn !== tokenEsperado) {
-    console.warn("⚠️ Token inválido:", jsonData.tkn);
+    console.warn("⚠️ Token inválido:", tokenEsperado);
     return res.status(401).json({ success: false, message: 'Token inválido' });
   }
 
   try {
-    //await checkAndInsertData(jsonData);
+    await checkAndInsertData(jsonData);
 
     if (jsonData.operacion) {
       const resultado = await updateProducction(jsonData);
