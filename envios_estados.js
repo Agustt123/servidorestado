@@ -166,8 +166,6 @@ const checkAndInsertData = async (jsonData, intento = 1) => {
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `, [didenvio, choferAsignado, estado, estadoML, subestado, formattedFecha, quien, superado, elim, latitud, longitud]);
 
-      crearLog(didempresa, quien, choferAsignado, jsonData, formattedFecha, estadoML, '/envios-estados', 1, pool);
-
     } else {
       await pool.query(`CREATE TABLE ${tableName} (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -198,7 +196,6 @@ const checkAndInsertData = async (jsonData, intento = 1) => {
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `, [didenvio, choferAsignado, estado, estadoML, subestado, formattedFecha, quien, superado, elim, latitud, longitud]);
     }
-    crearLog(didempresa, quien, choferAsignado, jsonData, formattedFecha, JSON.stringify(jsonData), '', 1, pool);
 
   } catch (error) {
     console.error(`Error en checkAndInsertData (intento ${intento}):`, error);
@@ -243,7 +240,6 @@ app.get('/test', (req, res) => {
 });
 const crypto = require('crypto');
 const { deleteProduction } = require('./controller/deleteProduction');
-const { crearLog } = require('./funciones/crearLogs');
 
 
 // Función que genera el hash SHA-256 de la fecha actual
