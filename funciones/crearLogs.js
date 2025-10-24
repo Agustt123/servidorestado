@@ -41,9 +41,9 @@ async function crearLog(empresa, usuario, perfil, body, tiempo, resultado, endpo
         ];
 
         await executeQuery(db, sqlLog, values);
-        logGreen(`Log creado: ${JSON.stringify(values)}`);
+
     } catch (error) {
-        logRed(`Error en crearLog: ${error.stack}`);
+        console.error('Error al crear el log:', error);
         throw error;
     }
 }
