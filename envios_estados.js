@@ -141,102 +141,81 @@ const checkAndInsertData = async (jsonData, intento = 1) => {
   let latitud = jsonData.latitud || 0;
   let longitud = jsonData.longitud || 0;
 
-  let conn;
+  let dbConnection;
 
   try {
-    // asumo que getConnection(didempresa) devuelve una conexión del pool (mysql2/promise)
-    conn = await getConnection(didempresa);
+    dbConnection = await getConnection(didempresa);
 
-    // 1) OJO: mysql2/promise devuelve [rows, fields]
-    const [choferRows] = await conn.query(
-      `SELECT choferAsignado FROM envios WHERE elim = 0 AND superado = 0 AND did = ?`,
-      [didenvio]
-    );
-    const choferAsignado = choferRows?.[0]?.choferAsignado ?? 0;
+    const getChoferAsignadoQuery = `SELECT choferAsignado FROM envios WHERE elim = 0 AND superado = 0 AND did = ?`;
+    const choferResults = await dbConnection.query(getChoferAsignadoQuery, [didenvio]);
+    const choferAsignado = (Array.isArray(choferResults) && choferResults.length > 0)
+      ? choferResults[0].choferAsignado
+      : 0;
 
-    // 2) Usar SIEMPRE la misma conexión en esta función
-    const [tables] = await conn.query(`SHOW TABLES LIKE ?`, [tableName]);
+    const [results] = await pool.query(`SHOW TABLES LIKE ?`, [tableName]);
 
-    if (tables.length > 0) {
-      const [existingResults] = await conn.query(
-        `SELECT 1 FROM ${tableName} WHERE didEnvio = ? LIMIT 1`,
-        [didenvio]
-      );
+    if (results.length > 0) {
+      const [existingResults] = await pool.query(`SELECT * FROM ${tableName} WHERE didEnvio = ?`, [didenvio]);
 
       if (existingResults.length > 0) {
-        await conn.query(
-          `UPDATE ${tableName} SET superado = ? WHERE didEnvio = ?`,
-          [1, didenvio]
-        );
+        await pool.query(`UPDATE ${tableName} SET superado = ? WHERE didEnvio = ?`, [1, didenvio]);
       }
 
-      await conn.query(
-        `INSERT INTO ${tableName}
-          (didEnvio, operador, estado, estadoML, subestadoML, fecha, quien, superado, elim, latitud, longitud)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [didenvio, choferAsignado, estado, estadoML, subestado, formattedFecha, quien, superado, elim, latitud, longitud]
-      );
+      await pool.query(`
+        INSERT INTO ${tableName} (didEnvio, operador, estado, estadoML, subestadoML, fecha, quien, superado, elim, latitud, longitud)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `, [didenvio, choferAsignado, estado, estadoML, subestado, formattedFecha, quien, superado, elim, latitud, longitud]);
 
+      crearLog(didempresa, quien, choferAsignado, jsonData, formattedFecha, estadoML, '/envios-estados', 1, pool);
 
     } else {
-      // ⚠️ Si `didempresa` viene de entrada externa, validalo para evitar SQLi en el nombre de tabla
-      await conn.query(`
-        CREATE TABLE ${tableName} (
-          id INT AUTO_INCREMENT PRIMARY KEY,
-          didEnvio VARCHAR(255),
-          operador VARCHAR(255),
-          estado VARCHAR(255),
-          estadoML VARCHAR(255),
-          subestadoML VARCHAR(255),
-          fecha DATETIME,
-          autofecha TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-          quien INT,
-          superado INT,
-          elim INT,
-          latitud DOUBLE,
-          longitud DOUBLE,
-          INDEX(didEnvio),
-          INDEX(operador),
-          INDEX(fecha),
-          INDEX(superado),
-          INDEX(elim),
-          INDEX(quien),
-          INDEX(estadoML),
-          INDEX(subestadoML)
-        )
-      `);
+      await pool.query(`CREATE TABLE ${tableName} (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        didEnvio VARCHAR(255),
+        operador VARCHAR(255),
+        estado VARCHAR(255),
+        estadoML VARCHAR(255),
+        subestadoML VARCHAR(255),
+        fecha DATETIME,
+        autofecha TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        quien INT,
+        superado INT,
+        elim INT,
+        latitud DOUBLE,
+        longitud DOUBLE,
+        INDEX(didEnvio),
+        INDEX(operador),
+        INDEX(fecha),
+        INDEX(superado),
+        INDEX(elim),
+        INDEX(quien),
+        INDEX(estadoML),
+        INDEX(subestadoML)
+      )`);
 
-      await conn.query(
-        `INSERT INTO ${tableName}
-          (didEnvio, operador, estado, estadoML, subestadoML, fecha, quien, superado, elim, latitud, longitud)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [didenvio, choferAsignado, estado, estadoML, subestado, formattedFecha, quien, superado, elim, latitud, longitud]
-      );
+      await pool.query(`
+        INSERT INTO ${tableName} (didEnvio, operador, estado, estadoML, subestadoML, fecha, quien, superado, elim, latitud, longitud)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `, [didenvio, choferAsignado, estado, estadoML, subestado, formattedFecha, quien, superado, elim, latitud, longitud]);
     }
+    crearLog(didempresa, quien, choferAsignado, jsonData, formattedFecha, JSON.stringify(jsonData), '', 1, pool);
 
   } catch (error) {
     console.error(`Error en checkAndInsertData (intento ${intento}):`, error);
 
+    // Reintentar hasta 3 veces si hay error
     if (intento < 3) {
       console.log(`🔁 Reintentando checkAndInsertData (intento ${intento + 1})...`);
-      await new Promise(res => setTimeout(res, 300));
+      await new Promise(res => setTimeout(res, 300)); // pequeño delay
       return checkAndInsertData(jsonData, intento + 1);
     }
 
+    // Si ya reintentó 3 veces, lanzar el error o registrarlo
     console.error(`❌ Falló definitivamente después de 3 intentos: didenvio ${didenvio}`);
 
   } finally {
-    // ✅ liberar si viene del pool; cerrar si es una conexión suelta
-    if (conn) {
-      try {
-        if (typeof conn.release === 'function') {
-          conn.release();
-        } else if (typeof conn.end === 'function') {
-          await conn.end();
-        }
-      } catch (e) {
-        console.error('Error liberando/cerrando la conexión:', e);
-      }
+    if (dbConnection && dbConnection.end) {
+      dbConnection.end(); // solo si existe
     }
   }
 };
@@ -264,6 +243,7 @@ app.get('/test', (req, res) => {
 });
 const crypto = require('crypto');
 const { deleteProduction } = require('./controller/deleteProduction');
+const { crearLog } = require('./funciones/crearLogs');
 
 
 // Función que genera el hash SHA-256 de la fecha actual
