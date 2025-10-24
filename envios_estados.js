@@ -382,7 +382,7 @@ app.post('/estados/lote', async (req, res) => {
     console.error('❌ Error general en /estados/lote:', error);
     return res.status(500).json({ success: false, message: 'Error interno en lote' });
   } finally {
-    if (dbConnection) dbConnection.end();
+    if (dbConnection?.release) dbConnection.release();
   }
 });
 app.post('/estados/eliminar', async (req, res) => {
