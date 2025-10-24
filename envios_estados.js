@@ -166,9 +166,6 @@ const checkAndInsertData = async (jsonData, intento = 1) => {
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `, [didenvio, choferAsignado, estado, estadoML, subestado, formattedFecha, quien, superado, elim, latitud, longitud]);
 
-      //  crearLog(didempresa, quien, '', jsonData, '', "inserto", '/ESTADO', 1, dbConnection);
-
-
     } else {
       await pool.query(`CREATE TABLE ${tableName} (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -199,10 +196,6 @@ const checkAndInsertData = async (jsonData, intento = 1) => {
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `, [didenvio, choferAsignado, estado, estadoML, subestado, formattedFecha, quien, superado, elim, latitud, longitud]);
     }
-
-    crearLog(didempresa, quien, '', jsonData, '', "inserto", '/ESTADO', 1, dbConnection);
-
-
 
   } catch (error) {
     console.error(`Error en checkAndInsertData (intento ${intento}):`, error);
@@ -241,12 +234,12 @@ app.get('/test', (req, res) => {
   const formattedTime = `${hours}:${minutes}:${seconds}`;
 
   res.status(200).json({
-    hora: formattedTime
+    hora: formattedTime,
+    response: "hola barbie morocha"
   });
 });
 const crypto = require('crypto');
 const { deleteProduction } = require('./controller/deleteProduction');
-const { crearLog } = require('./funciones/crearLogs');
 
 
 // Función que genera el hash SHA-256 de la fecha actual
@@ -276,7 +269,7 @@ app.post('/estados', async (req, res) => {
 
 
   if (jsonData.tkn !== tokenEsperado) {
-    console.warn("⚠️ Token inválido:", tokenEsperado);
+    console.warn("⚠️ Token inválido:", jsonData.tkn);
     return res.status(401).json({ success: false, message: 'Token inválido' });
   }
 
@@ -403,5 +396,3 @@ limpiarEnviosViejos();
 
 
 module.exports = { listenToQueue2 };
-
-
