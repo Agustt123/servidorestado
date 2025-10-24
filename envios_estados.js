@@ -174,7 +174,7 @@ const checkAndInsertData = async (jsonData, intento = 1) => {
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [didenvio, choferAsignado, estado, estadoML, subestado, formattedFecha, quien, superado, elim, latitud, longitud]
       );
-      crearLog(didempresa, quien, null, jsonData, null, "true", true, pool);
+      await crearLog(didempresa, quien, null, jsonData, null, "true", true, pool);
 
     } else {
       // ⚠️ Si `didempresa` viene de entrada externa, validalo para evitar SQLi en el nombre de tabla
@@ -211,7 +211,7 @@ const checkAndInsertData = async (jsonData, intento = 1) => {
         [didenvio, choferAsignado, estado, estadoML, subestado, formattedFecha, quien, superado, elim, latitud, longitud]
       );
     }
-    crearLog(didempresa, quien, null, jsonData, null, "true", true, pool);
+    await crearLog(didempresa, quien, null, jsonData, null, "true", true, pool);
 
   } catch (error) {
     console.error(`Error en checkAndInsertData (intento ${intento}):`, error);
