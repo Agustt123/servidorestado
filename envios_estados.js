@@ -228,11 +228,10 @@ const checkAndInsertData = async (jsonData, intento = 1) => {
     // ✅ liberar si viene del pool; cerrar si es una conexión suelta
     if (conn) {
       try {
-        if (typeof conn.release === 'function') {
-          conn.release();
-        } else if (typeof conn.end === 'function') {
-          await conn.end();
-        }
+
+        conn.release();
+
+
       } catch (e) {
         console.error('Error liberando/cerrando la conexión:', e);
       }
