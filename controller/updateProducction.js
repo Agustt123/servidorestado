@@ -102,9 +102,9 @@ const updateProducction = async (jsonData) => {
     throw error;
   } finally {
     // Liberar conexión al pool
-    if (conn) {
-      try { conn.release(); } catch (_) { }
-    }
+
+    conn.release()
+
   }
 };
 
