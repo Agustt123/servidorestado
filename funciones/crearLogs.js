@@ -22,7 +22,7 @@ async function crearLog(empresa, usuario, perfil, body, tiempo, resultado, exito
             JSON.stringify(resultado ?? {}),     // siempre strin
             exito ? 1 : 0
         ];
-        console.log(values);
+        //console.log(values);
 
 
         await executeQuery(db, sqlLog, values);
