@@ -168,7 +168,7 @@ const checkAndInsertData = async (jsonData, intento = 1) => {
         );
       }
 
-      await conn.query(
+      await pool.query(
         `INSERT INTO ${tableName}
           (didEnvio, operador, estado, estadoML, subestadoML, fecha, quien, superado, elim, latitud, longitud)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -204,7 +204,7 @@ const checkAndInsertData = async (jsonData, intento = 1) => {
         )
       `);
 
-      await conn.query(
+      await pool.query(
         `INSERT INTO ${tableName}
           (didEnvio, operador, estado, estadoML, subestadoML, fecha, quien, superado, elim, latitud, longitud)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
