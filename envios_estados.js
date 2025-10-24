@@ -177,6 +177,8 @@ const checkAndInsertData = async (jsonData, intento = 1) => {
         [didenvio, choferAsignado, estado, estadoML, subestado, formattedFecha, quien, superado, elim, latitud, longitud]
       );
 
+      crearLog(didempresa, quien, 'envios', jsonData, Date.now(), '', '', 1, conn);
+
     } else {
       // ⚠️ Si `didempresa` viene de entrada externa, validalo para evitar SQLi en el nombre de tabla
       await conn.query(`
@@ -211,6 +213,8 @@ const checkAndInsertData = async (jsonData, intento = 1) => {
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [didenvio, choferAsignado, estado, estadoML, subestado, formattedFecha, quien, superado, elim, latitud, longitud]
       );
+      crearLog(didempresa, quien, 'envios', jsonData, Date.now(), '', '', 1, conn);
+
     }
 
   } catch (error) {
@@ -263,6 +267,7 @@ app.get('/test', (req, res) => {
 });
 const crypto = require('crypto');
 const { deleteProduction } = require('./controller/deleteProduction');
+const { crearLog } = require('./funciones/crearLogs');
 
 
 // Función que genera el hash SHA-256 de la fecha actual
