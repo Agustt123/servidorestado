@@ -241,8 +241,7 @@ app.get('/test', (req, res) => {
   const formattedTime = `${hours}:${minutes}:${seconds}`;
 
   res.status(200).json({
-    hora: formattedTime,
-    response: "hola barbie morocha"
+    hora: formattedTime
   });
 });
 const crypto = require('crypto');
@@ -404,3 +403,5 @@ limpiarEnviosViejos();
 
 
 module.exports = { listenToQueue2 };
+
+
