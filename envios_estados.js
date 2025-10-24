@@ -178,7 +178,7 @@ const checkAndInsertData = async (jsonData, intento = 1) => {
 
     } else {
       // ⚠️ Si `didempresa` viene de entrada externa, validalo para evitar SQLi en el nombre de tabla
-      await conn.query(`
+      await pool.query(`
         CREATE TABLE ${tableName} (
           id INT AUTO_INCREMENT PRIMARY KEY,
           didEnvio VARCHAR(255),
