@@ -141,9 +141,9 @@ const checkAndInsertData = async (jsonData, intento = 1) => {
 
   let conn;
 
+  conn = await getConnection(didempresa);
   try {
     // asumo que getConnection(didempresa) devuelve una conexión del pool (mysql2/promise)
-    conn = await getConnection(didempresa);
 
     // 1) OJO: mysql2/promise devuelve [rows, fields]
     const [choferRows] = await conn.query(
