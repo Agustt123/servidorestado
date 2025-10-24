@@ -28,8 +28,8 @@ const updateProducction = async (jsonData) => {
   } = jsonData;
 
   let conn;
+  conn = await getConnection(didempresa);
   try {
-    conn = await getConnection(didempresa);
     await conn.beginTransaction();
 
     // 1) Resolver cadete asignado antes del insert
