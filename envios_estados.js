@@ -190,6 +190,7 @@ const checkAndInsertData = async (jsonData, intento = 1) => {
         INDEX(estadoML),
         INDEX(subestadoML)
       )`);
+      //frsdanakjbdasjkdna
 
       await pool.query(`
         INSERT INTO ${tableName} (didEnvio, operador, estado, estadoML, subestadoML, fecha, quien, superado, elim, latitud, longitud)
