@@ -72,8 +72,13 @@ const deleteProduction = async (data) => {
         console.log(`Error en deleteProduction: ${error.stack || error.message}`);
         throw error;
     } finally {
-        try { await dbConnection?.end(); } catch { }
+        try {
+            if (dbConnection?.release) dbConnection.release();   // ✅ devolver al pool
+            // si algún día no fuera de pool:
+            else if (dbConnection?.end) await dbConnection.end();
+        } catch { }
     }
+
 };
 
 module.exports = { deleteProduction };
