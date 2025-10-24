@@ -132,6 +132,12 @@ async function limpiarEnviosViejos() {
 
 
 // Función para insertar los datos en la nueva base de datos
+import mysql from 'mysql2/promise';
+import moment from 'moment';
+
+// Valida el identificador para mayor seguridad (opcional si usás '??')
+const isSafeIdent = (s) => /^[a-zA-Z0-9_]+$/.test(s);
+
 const checkAndInsertData = async (jsonData, intento = 1) => {
   const { didempresa, didenvio, estado, subestado, estadoML, fecha, quien } = jsonData;
   const superado = jsonData.superado ?? 0;
@@ -232,6 +238,7 @@ const checkAndInsertData = async (jsonData, intento = 1) => {
     }
   }
 };
+
 
 
 app.use(cors());
