@@ -134,40 +134,31 @@ async function limpiarEnviosViejos() {
 // Función para insertar los datos en la nueva base de datos
 const checkAndInsertData = async (jsonData, intento = 1) => {
   const { didempresa, didenvio, estado, subestado, estadoML, fecha, quien } = jsonData;
-  const superado = jsonData.superado || 0;
-  const elim = jsonData.elim || 0;
+  const superado = jsonData.superado ?? 0;
+  const elim = jsonData.elim ?? 0;
   const formattedFecha = moment(fecha).format('YYYY-MM-DD HH:mm:ss');
   const tableName = `estados_${didempresa}`;
-  let latitud = jsonData.latitud || 0;
-  let longitud = jsonData.longitud || 0;
+  const latitud = jsonData.latitud ?? 0;
+  const longitud = jsonData.longitud ?? 0;
 
-  let dbConnection;
+  if (!isSafeIdent(`estados_${didempresa}`)) {
+    throw new Error(`Nombre de tabla inválido: ${tableName}`);
+  }
 
+  let conn;
   try {
-    dbConnection = await getConnection(didempresa);
+    conn = await getConnection(didempresa);
 
-    const getChoferAsignadoQuery = `SELECT choferAsignado FROM envios WHERE elim = 0 AND superado = 0 AND did = ?`;
-    const choferResults = await dbConnection.query(getChoferAsignadoQuery, [didenvio]);
-    const choferAsignado = (Array.isArray(choferResults) && choferResults.length > 0)
-      ? choferResults[0].choferAsignado
-      : 0;
+    // 1) Buscar chofer asignado
+    const [choferRows] = await conn.query(
+      `SELECT choferAsignado FROM envios WHERE elim = 0 AND superado = 0 AND did = ?`,
+      [didenvio]
+    );
+    const choferAsignado = choferRows?.[0]?.choferAsignado ?? 0;
 
-    const [results] = await pool.query(`SHOW TABLES LIKE ?`, [tableName]);
-
-    if (results.length > 0) {
-      const [existingResults] = await pool.query(`SELECT * FROM ${tableName} WHERE didEnvio = ?`, [didenvio]);
-
-      if (existingResults.length > 0) {
-        await pool.query(`UPDATE ${tableName} SET superado = ? WHERE didEnvio = ?`, [1, didenvio]);
-      }
-
-      await pool.query(`
-        INSERT INTO ${tableName} (didEnvio, operador, estado, estadoML, subestadoML, fecha, quien, superado, elim, latitud, longitud)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `, [didenvio, choferAsignado, estado, estadoML, subestado, formattedFecha, quien, superado, elim, latitud, longitud]);
-
-    } else {
-      await pool.query(`CREATE TABLE ${tableName} (
+    // 2) Crear tabla si no existe (idempotente)
+    await conn.query(
+      `CREATE TABLE IF NOT EXISTS ?? (
         id INT AUTO_INCREMENT PRIMARY KEY,
         didEnvio VARCHAR(255),
         operador VARCHAR(255),
@@ -189,34 +180,58 @@ const checkAndInsertData = async (jsonData, intento = 1) => {
         INDEX(quien),
         INDEX(estadoML),
         INDEX(subestadoML)
-      )`);
+      )`,
+      [tableName] // '??' escapa identificadores
+    );
 
-      await pool.query(`
-        INSERT INTO ${tableName} (didEnvio, operador, estado, estadoML, subestadoML, fecha, quien, superado, elim, latitud, longitud)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `, [didenvio, choferAsignado, estado, estadoML, subestado, formattedFecha, quien, superado, elim, latitud, longitud]);
+    // 3) Si ya existe un estado para ese envío, marcar superado
+    const [existsRows] = await conn.query(
+      `SELECT 1 FROM ?? WHERE didEnvio = ? LIMIT 1`,
+      [tableName, didenvio]
+    );
+    if (existsRows.length > 0) {
+      await conn.query(
+        `UPDATE ?? SET superado = ? WHERE didEnvio = ?`,
+        [tableName, 1, didenvio]
+      );
     }
+
+    // 4) Insertar el nuevo estado
+    await conn.query(
+      `INSERT INTO ?? 
+        (didEnvio, operador, estado, estadoML, subestadoML, fecha, quien, superado, elim, latitud, longitud)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [tableName, didenvio, choferAsignado, estado, estadoML, subestado, formattedFecha, quien, superado, elim, latitud, longitud]
+    );
+
+    // 5) Log (si es async, esperalo)
+    await crearLog(didempresa, '', '', jsonData, Date.now(), '', '', 1, conn);
 
   } catch (error) {
-    console.error(`Error en checkAndInsertData (intento ${intento}):`, error);
+    // Ignorar de forma segura si algún path paralelo creó la tabla sin IF NOT EXISTS (por si quedó en algún branch)
+    if (error?.code === 'ER_TABLE_EXISTS_ERROR' || error?.sqlState === '42S01') {
+      // No-op: otro proceso la creó; continuar flujo normal en reintento
+    } else {
+      console.error(`Error en checkAndInsertData (intento ${intento}):`, error);
 
-    // Reintentar hasta 3 veces si hay error
-    if (intento < 3) {
-      console.log(`🔁 Reintentando checkAndInsertData (intento ${intento + 1})...`);
-      await new Promise(res => setTimeout(res, 300)); // pequeño delay
-      return checkAndInsertData(jsonData, intento + 1);
+      if (intento < 3) {
+        console.log(`🔁 Reintentando checkAndInsertData (intento ${intento + 1})...`);
+        await new Promise(res => setTimeout(res, 300));
+        return checkAndInsertData(jsonData, intento + 1);
+      }
+      console.error(`❌ Falló definitivamente después de 3 intentos: didenvio ${didenvio}`);
     }
-
-    // Si ya reintentó 3 veces, lanzar el error o registrarlo
-    console.error(`❌ Falló definitivamente después de 3 intentos: didenvio ${didenvio}`);
-
   } finally {
-    if (dbConnection && dbConnection.end) {
-      dbConnection.end(); // solo si existe
+    if (conn) {
+      try {
+        if (typeof conn.release === 'function') conn.release();
+        else if (typeof conn.end === 'function') await conn.end();
+      } catch (e) {
+        console.error('Error liberando/cerrando la conexión:', e);
+      }
     }
   }
 };
-
 
 
 app.use(cors());
