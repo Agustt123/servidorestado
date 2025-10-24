@@ -3,7 +3,7 @@ const mysql = require('mysql2/promise');
 const { getFromRedis } = require('./redisClient');
 
 const CONNECTION_LIMIT = 5;
-const MAX_OPEN_POOLS = 30;
+const MAX_OPEN_POOLS = 10;
 const IDLE_TTL_MS = 5 * 60_000;
 const HOST_FIJO = 'bhsmysql1.lightdata.com.ar';
 
